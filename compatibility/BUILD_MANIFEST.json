@@ -1,22 +1,26 @@
 {
-  "build": "0.4.2-compat.1",
+  "build": "0.4.2-compat.2",
   "built_on": "2026-10-19",
   "files": {
+    "ATTRIBUTION.md": {
+      "bytes": 2707,
+      "sha256": "bf4851dfa645da2523a5e0863fd91fcf2524fc6f465eaa999e9967b14ba37286"
+    },
     "LICENSE": {
       "bytes": 35149,
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     "README.md": {
-      "bytes": 6998,
-      "sha256": "e042526b711e166902a3bdebb26dd5c6b66267d85a88a82d08508e907a2072ec"
+      "bytes": 8178,
+      "sha256": "55df4f31e5bf7ecc59b2370c51c9a06787498c8ec0b996327e4b222f86c48430"
     },
     "README.upstream.md": {
       "bytes": 5318,
       "sha256": "1969df016f07d440a1b6f14fccbc31a91fe450b852407b5834d8520aefe264b2"
     },
     "THIRD_PARTY_NOTICES.md": {
-      "bytes": 2378,
-      "sha256": "aeebd94c856c7195b1994c1006a117a910dfdb0d6f6598209601dde38d8f7ed8"
+      "bytes": 2893,
+      "sha256": "8481a27195487afe4330c193bd468f4d4975585e994ccedb219ab0b587d4f593"
     },
     "__init__.py": {
       "bytes": 9387,
@@ -99,16 +103,16 @@
       "sha256": "ab3b03ec2bdfbb2417cf32318a96169021a8ce95d071fd5b3eed16ca9536860f"
     },
     "compatibility/BUILD_REPORT.md": {
-      "bytes": 8748,
-      "sha256": "89cfd348cbd1a87fdb27d23fcf9d9ada24ac1c1b7be8c31d314a1d1641d72d56"
+      "bytes": 11082,
+      "sha256": "0665f012b16a5b7221e822ed62dd45e02dd0d25005231b439126afc28221947a"
     },
     "compatibility/TESTING.md": {
-      "bytes": 3589,
-      "sha256": "ff6a86ade5773cb4b0ba960b0f7849797732452a2ed40d8162e3c112f931445d"
+      "bytes": 3908,
+      "sha256": "7aeabaf4ae6c59668989b8f6ee61cb7c8248d9ad091dae733d19a16a74693af1"
     },
     "compatibility/build_zip.py": {
       "bytes": 2872,
-      "sha256": "d99d6aea8c14fb0031602fc21cce6e00e614d0066adeebd1d49f020c535a2ca9"
+      "sha256": "c152c403851ee6b196c55934ac1d8994a40a40b0a2f8a6c65ae32f012c82cbc1"
     },
     "compatibility/evidence/actor-integration.log": {
       "bytes": 1609,
@@ -708,7 +712,7 @@
     },
     "version.py": {
       "bytes": 307,
-      "sha256": "77183cafca31f7f0bf01a928c686ba5a15ac0d10d97d31f98fd83bdef5d6f7d7"
+      "sha256": "9f11b1dea9abdbfba9e9ffb146f5228e3a9a82affbfcf0a92d9bbe143bcb3458"
     },
     "wheels/invisible_watermark-0.2.0+dreamtextures1-py3-none-any.whl": {
       "bytes": 1633432,

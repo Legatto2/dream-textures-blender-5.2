@@ -4,11 +4,11 @@ A community compatibility build of [Dream Textures](https://github.com/carson-ka
 
 Original project: **Carson Katri and the Dream Textures contributors**. Compatibility fork maintained by **Michael Heald ([Legatto2](https://github.com/Legatto2))**. See [attribution and licensing](ATTRIBUTION.md).
 
-**Status: experimental.** Build **0.4.2-compat.1** passes 47 automated tests using the official Blender 5.2.2 Linux application and its embedded Python. Windows wheel resolution also passes. **Windows DLL loading, RTX 5060 CUDA execution, and generation with a pretrained model still require target-machine validation.**
+**Status: experimental.** Build **0.4.2-compat.2** is an attribution and packaging revision of **0.4.2-compat.1**, whose implementation passed 47 automated tests using the official Blender 5.2.2 Linux application and its embedded Python. Windows wheel resolution also passed. Runtime behavior and dependency pins are unchanged; the revision was verified through source hashes, build metadata, ZIP integrity, and license/attribution inclusion. **Windows DLL loading, RTX 5060 CUDA execution, and generation with a pretrained model still require target-machine validation.**
 
 ## Install
 
-The planned prerelease is **v0.4.2-compat.1**. When available on the [Releases page](https://github.com/Legatto2/dream-textures-blender-5.2/releases), download **Dream-Textures-0.4.2-compat1-Blender52-Windows.zip**. This named installation asset contains the required `dream_textures/` folder.
+The planned prerelease is **v0.4.2-compat.2**. When available on the [Releases page](https://github.com/Legatto2/dream-textures-blender-5.2/releases), download **Dream-Textures-0.4.2-compat2-Blender52-Windows.zip**. This named installation asset contains the required `dream_textures/` folder and the complete [attribution notice](../ATTRIBUTION.md).
 
 1. In Blender, open **Edit → Preferences → Add-ons → Install from Disk…** and select the ZIP.
 2. Enable **Dream Textures (Blender 5.2 Compatibility)** and expand its settings.

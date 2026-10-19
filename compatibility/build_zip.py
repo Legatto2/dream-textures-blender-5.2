@@ -26,7 +26,7 @@ def build(source, output):
         raise ValueError('Write the release ZIP outside the source folder.')
     manifest_path = source / 'compatibility/BUILD_MANIFEST.json'
     manifest = {
-        'build': '0.4.2-compat.1',
+        'build': '0.4.2-compat.2',
         'built_on': '2026-10-19',
         'upstream_commit': 'c2622a8a9f1ae6b790cfe1d2571f814b126811b4',
         'target': {'blender': '5.2.2', 'python': '3.13', 'platform': 'Windows x64', 'gpu': 'RTX 5060'},
