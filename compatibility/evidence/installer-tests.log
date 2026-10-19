@@ -1,0 +1,24 @@
+test_addon_module_reload_does_not_hot_swap_native_libraries (test_installer.InstallerTests.test_addon_module_reload_does_not_hot_swap_native_libraries) ... ok
+test_cancel_between_validation_and_activation_keeps_previous (test_installer.InstallerTests.test_cancel_between_validation_and_activation_keeps_previous) ... Downloading and installing the Dream Textures GPU libraries. Blender can remain open.
+Checking dependency imports and the graphics device.
+ok
+test_cancel_stops_owned_subprocess_promptly (test_installer.InstallerTests.test_cancel_stops_owned_subprocess_promptly) ... ok
+test_cpu_and_wrong_abi_cannot_satisfy_cuda_readiness (test_installer.InstallerTests.test_cpu_and_wrong_abi_cannot_satisfy_cuda_readiness) ... ok
+test_embedded_python_selection_never_uses_blender_executable (test_installer.InstallerTests.test_embedded_python_selection_never_uses_blender_executable) ... ok
+test_failed_pointer_commit_preserves_previous_selection (test_installer.InstallerTests.test_failed_pointer_commit_preserves_previous_selection) ... ok
+test_hermes_environment_cannot_redirect_pip_or_python (test_installer.InstallerTests.test_hermes_environment_cannot_redirect_pip_or_python) ... ok
+test_install_selection_is_frozen_until_next_blender_process (test_installer.InstallerTests.test_install_selection_is_frozen_until_next_blender_process) ... ok
+test_path_traversal_and_symlink_escape_are_rejected (test_installer.InstallerTests.test_path_traversal_and_symlink_escape_are_rejected) ... ok
+test_pip_can_run_directly_from_bundled_wheel_without_installing_it (test_installer.InstallerTests.test_pip_can_run_directly_from_bundled_wheel_without_installing_it) ... ok
+test_pip_command_has_private_target_fixed_indexes_and_no_shell (test_installer.InstallerTests.test_pip_command_has_private_target_fixed_indexes_and_no_shell) ... ok
+test_replacement_and_rollback_preserve_old_packages (test_installer.InstallerTests.test_replacement_and_rollback_preserve_old_packages) ... ok
+test_resolver_failure_removes_only_this_attempt (test_installer.InstallerTests.test_resolver_failure_removes_only_this_attempt) ... Downloading and installing the Dream Textures GPU libraries. Blender can remain open.
+ok
+test_runtime_lock_releases_after_error_and_rejects_overlap (test_installer.InstallerTests.test_runtime_lock_releases_after_error_and_rejects_overlap) ... ok
+test_unvalidated_runtime_cannot_replace_working_runtime (test_installer.InstallerTests.test_unvalidated_runtime_cannot_replace_working_runtime) ... ok
+test_windows_abi3_and_torch_dll_directories_keep_live_handles (test_installer.InstallerTests.test_windows_abi3_and_torch_dll_directories_keep_live_handles) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 1.264s
+
+OK

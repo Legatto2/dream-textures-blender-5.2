@@ -36,6 +36,9 @@ class Upscale(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
+        if not Generator.runtime_available():
+            cls.poll_message_set("Install Dream Textures dependencies in Preferences, then restart Blender.")
+            return False
         return Generator.shared().can_use()
 
     def execute(self, context):

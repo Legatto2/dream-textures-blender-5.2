@@ -1,0 +1,24 @@
+{
+  "original_project": "https://pypi.org/project/invisible-watermark/0.2.0/",
+  "original_wheel": "invisible_watermark-0.2.0-py3-none-any.whl",
+  "original_sha256": "644311beed9cfe4a9a5a4a46c740f47800cef184fe2e1297f3f4542e2d992f8b",
+  "custom_wheel": "invisible_watermark-0.2.0+dreamtextures1-py3-none-any.whl",
+  "custom_sha256": "96c13ca5bbbd698d4fe3204d2c1bbf28b9f981ede8050cebadc9576d15fd6a0a",
+  "changes": [
+    "Distribution version changed to 0.2.0+dreamtextures1",
+    "Dependency opencv-python>=4.1.0.25 replaced with opencv-python-headless>=4.1.0.25",
+    "Distribution metadata directory renamed and wheel RECORD hashes regenerated"
+  ],
+  "code_and_models_unchanged": true,
+  "cv2_apis": [
+    "COLOR_BGR2YUV",
+    "COLOR_YUV2BGR",
+    "cvtColor",
+    "dct",
+    "idct"
+  ],
+  "reason": "The add-on uses only OpenCV image-processing operations; controlnet-aux requires the headless provider. This prevents two distributions overwriting the same cv2 namespace while preserving SDXL watermarking.",
+  "license": "Original LICENSE retained unchanged inside the wheel and copied alongside this manifest.",
+  "original_download_url": "https://files.pythonhosted.org/packages/2b/57/18b5a914f6d7994dd349252873169e946dc824328e9a37fd15ed836deedc/invisible_watermark-0.2.0-py3-none-any.whl",
+  "pypi_sha256_verified": true
+}

@@ -243,6 +243,9 @@ class ProjectDreamTexture(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
+        if not Generator.runtime_available():
+            cls.poll_message_set("Install Dream Textures dependencies in Preferences, then restart Blender.")
+            return False
         try:
             _validate_projection(context)
             prompt = context.scene.dream_textures_project_prompt

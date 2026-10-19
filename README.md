@@ -1,81 +1,95 @@
-![Dream Textures, subtitle: Stable Diffusion built-in to Blender](docs/assets/banner.png)
+# Dream Textures — Blender 5.2 compatibility build
 
-[![Latest Release](https://flat.badgen.net/github/release/carson-katri/dream-textures)](https://github.com/carson-katri/dream-textures/releases/latest)
-[![Join the Discord](https://flat.badgen.net/badge/icon/discord?icon=discord&label)](https://discord.gg/EmDJ8CaWZ7)
-[![Total Downloads](https://img.shields.io/github/downloads/carson-katri/dream-textures/total?style=flat-square)](https://github.com/carson-katri/dream-textures/releases/latest)
-[![Buy on Blender Market](https://flat.badgen.net/badge/buy/blender%20market/orange)](https://www.blendermarket.com/products/dream-textures)
+**Build: 0.4.2-compat.1 · 19 October 2026**
 
-* Create textures, concept art, background assets, and more with a simple text prompt
-* Use the 'Seamless' option to create textures that tile perfectly with no visible seam
-* Texture entire scenes with 'Project Dream Texture' and depth to image
-* Re-style animations with the Cycles render pass
-* Run the models on your machine to iterate without slowdowns from a service
+An experimental community build for **Blender 5.2.2 LTS on Windows x64**, using Blender's **Python 3.13** and an **NVIDIA RTX 5060**. Based on Dream Textures 0.4.1, commit c2622a8a9f1ae6b790cfe1d2571f814b126811b4.
 
-# Installation
-Download the [latest release](https://github.com/carson-katri/dream-textures/releases/latest) and follow the instructions there to get up and running.
+The ZIP contains the add-on's source, its reviewed small watermark wheel, documentation, and validation evidence. The GPU runtime and Stable Diffusion model download separately through Blender.
 
-> On macOS, it is possible you will run into a quarantine issue with the dependencies. To work around this, run the following command in the app `Terminal`: `xattr -r -d com.apple.quarantine ~/Library/Application\ Support/Blender/3.3/scripts/addons/dream_textures/.python_dependencies`. This will allow the PyTorch `.dylib`s and `.so`s to load without having to manually allow each one in System Preferences.
+## Install in Blender
 
-If you want a visual guide to installation, see this video tutorial from Ashlee Martino-Tarr: https://youtu.be/kEcr8cNmqZk
-> Ensure you always install the [latest version](https://github.com/carson-katri/dream-textures/releases/latest) of the add-on if any guides become out of date.
+1. Save **Dream-Textures-0.4.2-compat1-Blender52-Windows.zip** somewhere easy to find, such as Downloads. Keep it zipped for installation.
+2. Open **Blender 5.2.2 → Edit → Preferences → Add-ons**.
+3. Open the menu at the upper right and choose **Install from Disk…**. Select this ZIP, then install it. If an older Dream Textures copy is enabled, disable it before replacing it.
+4. Enable **Dream Textures (Blender 5.2 Compatibility)** and expand its settings.
+5. Click **Install GPU Dependencies**. Allow online access in Blender if its network setting blocks installation. Progress appears in these settings; **Open Installation Log** shows the detailed output.
+6. Wait for **Dependencies installed. Restart Blender to continue.** Then fully close and reopen Blender.
+7. Return to the same settings. A successful runtime shows the GPU name and Torch/CUDA versions. **Check GPU Runtime** repeats its checks without downloading a model.
+8. Click **Download Stable Diffusion 1.5**. The current FP16 model selection is approximately **2.74 GB**. This public model works with the token field left blank.
+9. Change a Blender area to **Image Editor**, choose **View → Sidebar** (or press **N** with the pointer over that area), then open the **Dream** tab.
 
-# Usage
+Setup runs through Blender's preferences. Dependencies install with Blender's embedded interpreter into Dream Textures' own runtime directory.
 
-Here's a few quick guides:
+## First image on the RTX 5060
 
-## [Setting Up](https://github.com/carson-katri/dream-textures/wiki/Setup)
-Setup instructions for various platforms and configurations.
+If ComfyUI is still running, exit its app or running console to make its GPU memory available.
 
-## [Image Generation](https://github.com/carson-katri/dream-textures/wiki/Image-Generation)
-Create textures, concept art, and more with text prompts. Learn how to use the various configuration options to get exactly what you're looking for.
+Use these starting settings:
 
-![A graphic showing each step of the image generation process](docs/assets/image_generation.png)
+| Setting | First test |
+|---|---|
+| Backend | HuggingFace Diffusers |
+| Model | stable-diffusion-v1-5/stable-diffusion-v1-5 |
+| Image size | 512 × 512 |
+| Steps | 20 |
+| Batch size | 1 |
+| Half Precision | Enabled |
+| CPU Offload | Model — the default in this compatibility build |
+| SDP Attention | Enabled |
+| SDXL Refiner | Disabled |
 
-## [Texture Projection](https://github.com/carson-katri/dream-textures/wiki/Texture-Projection)
-Texture entire models and scenes with depth to image.
+Try the prompt **“weathered stone wall texture, even lighting, detailed surface”**, then click the generation control.
 
-![A graphic showing each step of the texture projection process](docs/assets/texture_projection.png)
+A generated image in the Image Editor completes the first Windows/GPU smoke test. These are conservative starting settings; scene complexity and other GPU applications affect available memory.
 
-## [Inpaint/Outpaint](https://github.com/carson-katri/dream-textures/wiki/Inpaint-and-Outpaint)
-Inpaint to fix up images and convert existing textures into seamless ones automatically.
+## What has been checked
 
-Outpaint to increase the size of an image by extending it in any direction.
+**47 automated tests passed**:
 
-![A graphic showing each step of the outpainting process](docs/assets/inpaint_outpaint.png)
+- 11 tests in the official Blender 5.2.2 application: registration/lifecycle, current node interfaces, image and render color handling, brush settings, presets, and handling of a backend error.
+- 14 offline backend tests using Blender's actual Python 3.13.13 and real tiny randomly initialized diffusion models: text/image generation, inpainting, depth, ControlNet, SDXL, upscaling, seamless generation, tiled decoding, previews, watermarking, and image conversion.
+- 16 installer tests: isolated dependency commands, runtime validation/activation, cancellation, path/ABI checks, restart behavior, and rollback.
+- 6 tests of the separate worker in Blender: interpreter/dependency isolation, NumPy results, exception transport, cancellation, and recovery after process/transport failures.
 
-## [Render Engine](https://github.com/carson-katri/dream-textures/wiki/Render-Engine)
-Use the Dream Textures node system to create complex effects.
+All 52 pinned packages resolve to compatible Windows Python 3.13 binary or pure-Python wheels. The CPU test runtime matches its corresponding 52 pins.
 
-![A graphic showing each frame of a render, split with the scene and generated result](docs/assets/render_pass.png)
+**Windows DLL loading, RTX 5060 CUDA execution, and a full pretrained-model generation still require the first test on your Windows PC.** Linux CPU tests cannot establish those results. The installer performs small CUDA matrix multiplication and convolution checks before it selects a new GPU runtime.
 
-## [AI Upscaling](https://github.com/carson-katri/dream-textures/wiki/AI-Upscaling)
-Upscale your low-res generations 4x.
+The detailed scope and logs are in **compatibility/BUILD_REPORT.md** and **compatibility/evidence/**.
 
-![A graphic showing each step of the upscaling process](docs/assets/upscale.png)
+## Changes in this build
 
-## [History](https://github.com/carson-katri/dream-textures/wiki/History)
-Recall, export, and import history entries for later use.
+- Blender 5.2 node, brush, socket, render, lifecycle, and NumPy APIs.
+- A private, pinned Python 3.13 runtime with **PyTorch 2.9.1 / CUDA 12.8**, replacing reliance on the old bundled interpreter-specific libraries.
+- Background installation with cancellation, logs, validation, restart selection, and restoration of the previous validated runtime.
+- Worker isolation from inherited virtual-environment paths; failures complete the waiting operation instead of leaving Blender waiting indefinitely.
+- Fixes for depth prompt encoding, offload hook cleanup, tiled VAE return types, and unknown-length downloads.
+- Preserved watermark support with one OpenCV provider. The bundled watermark wheel changes dependency metadata only; its code/model/license bytes remain original.
+- CPU model offloading enabled by default in the Blender UI for this 8 GB target.
 
-# Compatibility
-Dream Textures has been tested with CUDA and Apple Silicon GPUs. Over 4GB of VRAM is recommended.
+## If something fails
 
-If you have an issue with a supported GPU, please create an issue.
+| What you see | Next step |
+|---|---|
+| Installation failed | Open **Installation Log** in the add-on settings and use the actual last error to diagnose it. |
+| Dependencies installed but generation is unavailable | Fully restart Blender. Toggling the add-on does not switch the runtime within the same process. |
+| CUDA/device check failed | Keep the log. The failed runtime is not activated. Check the NVIDIA driver/device error shown there. |
+| Out of GPU memory during generation | Use 512 × 512, batch 1, Half Precision, CPU Offload **Model**, and close other GPU applications. |
+| A later runtime update causes trouble | Choose **Restore Previous Runtime**, then restart Blender. |
+| Two Dream Textures copies are reported | Disable the old duplicate and enable one copy of this build. |
 
-### Cloud Processing
-If your hardware is unsupported, you can use DreamStudio to process in the cloud. Follow the instructions in the release notes to setup with DreamStudio.
+This add-on retains its module name **dream_textures** to preserve existing preferences. Runtime data is stored under Blender's configuration folder in **dream_textures_compat**; model files use the Hugging Face cache or your linked checkpoint paths. The installer retains previous completed runtimes for rollback.
 
-# Contributing
-For detailed instructions on installing from source, see the guide on [setting up a development environment](https://github.com/carson-katri/dream-textures/wiki/Setting-Up-a-Development-Environment).
+## Source and license
 
-# Troubleshooting
+Dream Textures source is GPL-3.0-or-later; see **LICENSE**. The original project README is retained as **README.upstream.md**. This compatibility build's implementation and test source are included.
 
-If you are experiencing trouble getting Dream Textures running, check Blender's system console (in the top left under the "Window" dropdown next to "File" and "Edit") for any error messages. Then [search in the issues list](https://github.com/carson-katri/dream-textures/issues?q=is%3Aissue) with your error message and symptoms.
+The bundled watermark wheel is MIT-licensed; its license and exact modification record are in **compatibility/invisible-watermark/**. See **THIRD_PARTY_NOTICES.md**.
 
-> **Note** On macOS there is no option to open the system console. Instead, you can get logs by opening the app *Terminal*, entering the command `/Applications/Blender.app/Contents/MacOS/Blender` and pressing the Enter key. This will launch Blender and any error messages will show up in the Terminal app.
+Primary project references:
 
-![A screenshot of the "Window" > "Toggle System Console" menu action in Blender](docs/assets/readme-toggle-console.png)
-
-Features and feedback are also accepted on the issues page. If you have any issues that aren't listed, feel free to add them there!
-
-The [Dream Textures Discord server](https://discord.gg/EmDJ8CaWZ7) also has a common issues list and strong community of helpful people, so feel free to come by for some help there as well.
-
+- Dream Textures 0.4.1: https://github.com/carson-katri/dream-textures/releases/tag/0.4.1
+- Official PyTorch version/installation matrix: https://pytorch.org/get-started/previous-versions/
+- NVIDIA CUDA GPU capabilities: https://developer.nvidia.com/cuda/gpus
+- Default model: https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5
+- Blender 5.2: https://www.blender.org/releases/5-2/

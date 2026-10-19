@@ -1,0 +1,101 @@
+{
+  "empty_token_metadata_request_succeeded": true,
+  "repository": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+  "weights_downloaded": false,
+  "allow_patterns": [
+    "config.json",
+    "feature_extractor/*",
+    "model_index.json",
+    "pipeline.py",
+    "safety_checker/config.json",
+    "safety_checker/model.fp16.safetensors",
+    "safety_checker/pytorch_model.fp16.bin",
+    "scheduler/*",
+    "scheduler_config.json",
+    "text_encoder/config.json",
+    "text_encoder/model.fp16.safetensors",
+    "text_encoder/pytorch_model.fp16.bin",
+    "tokenizer/*",
+    "unet/config.json",
+    "unet/diffusion_pytorch_model.fp16.bin",
+    "unet/diffusion_pytorch_model.fp16.safetensors",
+    "vae/config.json",
+    "vae/diffusion_pytorch_model.fp16.bin",
+    "vae/diffusion_pytorch_model.fp16.safetensors"
+  ],
+  "ignore_patterns": [
+    "*.bin",
+    "*.bin.index.*json",
+    "*.msgpack",
+    "*.msgpack.index.*json",
+    "*.onnx",
+    "*.onnx.index.*json",
+    "*.pb",
+    "*.pb.index.*json"
+  ],
+  "revision": null,
+  "pipeline_download_reached_weight_selection": true,
+  "selected_files": [
+    {
+      "name": "feature_extractor/preprocessor_config.json",
+      "size": 342
+    },
+    {
+      "name": "model_index.json",
+      "size": 541
+    },
+    {
+      "name": "safety_checker/config.json",
+      "size": 4723
+    },
+    {
+      "name": "safety_checker/model.fp16.safetensors",
+      "size": 608018440
+    },
+    {
+      "name": "scheduler/scheduler_config.json",
+      "size": 308
+    },
+    {
+      "name": "text_encoder/config.json",
+      "size": 617
+    },
+    {
+      "name": "text_encoder/model.fp16.safetensors",
+      "size": 246144864
+    },
+    {
+      "name": "tokenizer/merges.txt",
+      "size": 524619
+    },
+    {
+      "name": "tokenizer/special_tokens_map.json",
+      "size": 472
+    },
+    {
+      "name": "tokenizer/tokenizer_config.json",
+      "size": 806
+    },
+    {
+      "name": "tokenizer/vocab.json",
+      "size": 1059962
+    },
+    {
+      "name": "unet/config.json",
+      "size": 743
+    },
+    {
+      "name": "unet/diffusion_pytorch_model.fp16.safetensors",
+      "size": 1719125304
+    },
+    {
+      "name": "vae/config.json",
+      "size": 547
+    },
+    {
+      "name": "vae/diffusion_pytorch_model.fp16.safetensors",
+      "size": 167335342
+    }
+  ],
+  "selected_size_bytes": 2742217630
+}

@@ -1,0 +1,16 @@
+test_01_embedded_python_and_private_dependencies (__main__.ActorIntegrationTests.test_01_embedded_python_and_private_dependencies) ... ACTOR_RUNTIME {"bpy_imported": false, "executable": "/workspace/scratch/540d5506d980/dreamtextures_build/runtime/blender-5.2.2-linux-x64/5.2/python/bin/python3.13", "numpy_path": "/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/numpy/__init__.py", "numpy_version": "2.3.5", "python": [3, 13, 13], "torch_path": "/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/torch/__init__.py", "torch_version": "2.9.1+cpu"}
+ok
+test_02_numpy_array_round_trip (__main__.ActorIntegrationTests.test_02_numpy_array_round_trip) ... ok
+test_03_dependency_exception_reaches_frontend_without_dependency_import (__main__.ActorIntegrationTests.test_03_dependency_exception_reaches_frontend_without_dependency_import) ... ok
+test_04_cancel_stream_then_accept_next_request (__main__.ActorIntegrationTests.test_04_cancel_stream_then_accept_next_request) ... ok
+test_05_crash_completes_future_and_next_request_recovers (__main__.ActorIntegrationTests.test_05_crash_completes_future_and_next_request_recovers) ... ok
+test_06_unreadable_response_cannot_corrupt_the_next_request (__main__.ActorIntegrationTests.test_06_unreadable_response_cannot_corrupt_the_next_request) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 6.448s
+
+OK
+ACTOR_INTEGRATION_PASS
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:34:58)
+
+Blender quit

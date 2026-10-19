@@ -2,7 +2,6 @@ import bpy
 from bpy.types import Panel, Operator, Menu
 from bl_operators.presets import AddPresetBase
 from bl_ui.utils import PresetPanel
-from typing import _AnnotatedAlias
 import os
 import shutil
 from ..absolute_path import absolute_path
@@ -29,25 +28,28 @@ class AddAdvancedPreset(AddPresetBase, Operator):
     
     preset_subdir = 'dream_textures/advanced'
     
-    preset_defines = ['prompt = bpy.context.scene.dream_textures_prompt']
+    preset_defines = [
+        'prompt = bpy.context.scene.dream_textures_prompt',
+        'backend = prompt.get_backend()',
+    ]
     preset_values = [
         "prompt.steps",
         "prompt.cfg_scale",
         "prompt.scheduler",
         "prompt.step_preview_mode",
 
-        "prompt.optimizations_attention_slicing",
-        "prompt.optimizations_attention_slice_size_src",
-        "prompt.optimizations_attention_slice_size",
-        "prompt.optimizations_cudnn_benchmark",
-        "prompt.optimizations_tf32",
-        "prompt.optimizations_amp",
-        "prompt.optimizations_half_precision",
-        "prompt.optimizations_sequential_cpu_offload",
-        "prompt.optimizations_channels_last_memory_format",
-        "prompt.optimizations_batch_size",
-        "prompt.optimizations_vae_slicing",
-        "prompt.optimizations_cpu_only",
+        "backend.attention_slicing",
+        "backend.attention_slice_size_src",
+        "backend.attention_slice_size",
+        "backend.cudnn_benchmark",
+        "backend.tf32",
+        "backend.half_precision",
+        "backend.cpu_offload",
+        "backend.channels_last_memory_format",
+        "backend.sdp_attention",
+        "backend.batch_size",
+        "backend.vae_slicing",
+        "backend.cpu_only",
     ]
 
 class RestoreDefaultPresets(Operator):
@@ -63,17 +65,19 @@ class RestoreDefaultPresets(Operator):
 PRESETS_PATH = os.path.join(bpy.utils.user_resource('SCRIPTS'), 'presets/dream_textures/advanced')
 DEFAULT_PRESETS_PATH = absolute_path('builtin_presets')
 def register_default_presets(force=False):
-    presets_path_exists = os.path.isdir(PRESETS_PATH)
-    if not presets_path_exists or force:
-        if not presets_path_exists:
-            os.makedirs(PRESETS_PATH)
-        for default_preset in os.listdir(DEFAULT_PRESETS_PATH):
-            if not os.path.exists(os.path.join(PRESETS_PATH, default_preset)):
-                shutil.copy(os.path.join(DEFAULT_PRESETS_PATH, default_preset), PRESETS_PATH)
+    os.makedirs(PRESETS_PATH, exist_ok=True)
+    for default_preset in os.listdir(DEFAULT_PRESETS_PATH):
+        source = os.path.join(DEFAULT_PRESETS_PATH, default_preset)
+        if not default_preset.endswith('.py') or not os.path.isfile(source):
+            continue
+        if force or not os.path.exists(os.path.join(PRESETS_PATH, default_preset)):
+            shutil.copy(source, PRESETS_PATH)
 
 def default_presets_missing():
     if not os.path.isdir(PRESETS_PATH):
         return True
     for default_preset in os.listdir(DEFAULT_PRESETS_PATH):
+        if not default_preset.endswith('.py') or not os.path.isfile(os.path.join(DEFAULT_PRESETS_PATH, default_preset)):
+            continue
         if not os.path.exists(os.path.join(PRESETS_PATH, default_preset)):
             return True

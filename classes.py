@@ -1,4 +1,7 @@
-from .operators.install_dependencies import InstallDependencies, UninstallDependencies
+from .operators.install_dependencies import (
+    InstallDependencies, UninstallDependencies, CancelDependencyInstall,
+    VerifyRuntime, OpenRuntimeLog, RestorePreviousRuntime,
+)
 from .operators.open_latest_version import OpenLatestVersion
 from .operators.dream_texture import DreamTexture, ReleaseGenerator, CancelGenerator
 from .operators.view_history import SCENE_UL_HistoryList, RecallHistoryEntry, ClearHistory, RemoveHistorySelection, ExportHistorySelection, ImportPromptFile
@@ -68,6 +71,10 @@ PREFERENCE_CLASSES = (
     SeamlessResult,
     UninstallDependencies,
     InstallDependencies,
+    CancelDependencyInstall,
+    VerifyRuntime,
+    OpenRuntimeLog,
+    RestorePreviousRuntime,
     OpenURL,
     ImportWeights,
     RestoreDefaultPresets,

@@ -1,0 +1,21 @@
+test_01_registration_without_ai_dependencies (__main__.BlenderCompatibilityTests.test_01_registration_without_ai_dependencies) ... ok
+test_02_group_input_execution_uses_current_interface (__main__.BlenderCompatibilityTests.test_02_group_input_execution_uses_current_interface) ... ok
+test_03_new_tree_operator_assigns_its_own_tree (__main__.BlenderCompatibilityTests.test_03_new_tree_operator_assigns_its_own_tree) ... ok
+test_04_image_pixels_round_trip_and_orientation (__main__.BlenderCompatibilityTests.test_04_image_pixels_round_trip_and_orientation) ... ok
+test_05_integer_image_conversion_with_numpy_2 (__main__.BlenderCompatibilityTests.test_05_integer_image_conversion_with_numpy_2) ... ok
+test_06_render_pass_color_conversion (__main__.BlenderCompatibilityTests.test_06_render_pass_color_conversion) ... ok
+test_07_render_failure_releases_the_render_waiter (__main__.BlenderCompatibilityTests.test_07_render_failure_releases_the_render_waiter) ... ok
+test_08_inpaint_preserves_selected_brush_settings (__main__.BlenderCompatibilityTests.test_08_inpaint_preserves_selected_brush_settings) ... ok
+test_09_ui_poll_does_not_start_uninstalled_runtime (__main__.BlenderCompatibilityTests.test_09_ui_poll_does_not_start_uninstalled_runtime) ... ok
+test_10_builtin_presets_use_backend_properties (__main__.BlenderCompatibilityTests.test_10_builtin_presets_use_backend_properties) ... ok
+test_90_disable_and_reenable (__main__.BlenderCompatibilityTests.test_90_disable_and_reenable) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.093s
+
+OK
+Blender 5.2.2 LTS; Python 3.13.13 (main, Apr 25 2025, 12:39:20) [GCC 14.2.1 20250110 (Red Hat 14.2.1-11)]; NumPy 2.3.4
+Package: /workspace/scratch/540d5506d980/dreamtextures_build/package
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:34:58)
+
+Blender quit

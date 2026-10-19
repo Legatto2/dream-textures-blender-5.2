@@ -205,8 +205,12 @@ def depth_to_image(
             do_classifier_free_guidance = guidance_scale > 1.0
 
             # 3. Encode input prompt
-            text_embeddings = self._encode_prompt(
+            prompt_embeddings, negative_embeddings = self.encode_prompt(
                 prompt, device, num_images_per_prompt, do_classifier_free_guidance, negative_prompt
+            )
+            text_embeddings = (
+                torch.cat([negative_embeddings, prompt_embeddings])
+                if do_classifier_free_guidance else prompt_embeddings
             )
 
             # 4. Prepare the depth image
@@ -313,7 +317,9 @@ def depth_to_image(
 
             image = self.image_processor.postprocess(image, output_type=output_type, do_denormalize=do_denormalize)
 
-            # Offload last model to CPU
+            # Release the hooks tracked by diffusers' CUDA offload API.
+            self.maybe_free_model_hooks()
+            # Keep the legacy DirectML offload hook supported as well.
             if hasattr(self, "final_offload_hook") and self.final_offload_hook is not None:
                 self.final_offload_hook.offload()
 

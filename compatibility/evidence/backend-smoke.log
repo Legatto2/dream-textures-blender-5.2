@@ -1,0 +1,117 @@
+{"python": "3.13.13", "torch": "2.9.1+cpu", "diffusers": "0.27.2", "numpy": "2.3.5", "device": "cpu", "pretrained_weights_downloaded": false}
+test_01_dependency_and_conversion_imports (__main__.BackendCompatibility.test_01_dependency_and_conversion_imports) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/mediapipe_face/mediapipe_face_common.py:7: UserWarning: The module 'mediapipe' is not installed. The package will have limited functionality. Please install it using the command: pip install 'mediapipe'
+  warnings.warn(
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/open_pose/body.py:7: DeprecationWarning: Please import `gaussian_filter` from the `scipy.ndimage` namespace; the `scipy.ndimage.filters` namespace is deprecated and will be removed in SciPy 2.0.0.
+  from scipy.ndimage.filters import gaussian_filter
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/open_pose/hand.py:4: DeprecationWarning: Please import `gaussian_filter` from the `scipy.ndimage` namespace; the `scipy.ndimage.filters` namespace is deprecated and will be removed in SciPy 2.0.0.
+  from scipy.ndimage.filters import gaussian_filter
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/timm/models/layers/__init__.py:49: DeprecationWarning: Importing from timm.models.layers is deprecated, please import via timm.layers
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.layers", DeprecationWarning)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/timm/models/registry.py:4: DeprecationWarning: Importing from timm.models.registry is deprecated, please import via timm.models
+  warnings.warn(f"Importing from {__name__} is deprecated, please import via timm.models", DeprecationWarning)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/segment_anything/modeling/tiny_vit_sam.py:654: UserWarning: Overwriting tiny_vit_5m_224 in registry with controlnet_aux.segment_anything.modeling.tiny_vit_sam.tiny_vit_5m_224. This is because the name being registered conflicts with an existing name. Please check if this is not expected.
+  return register_model(fn_wrapper)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/segment_anything/modeling/tiny_vit_sam.py:654: UserWarning: Overwriting tiny_vit_11m_224 in registry with controlnet_aux.segment_anything.modeling.tiny_vit_sam.tiny_vit_11m_224. This is because the name being registered conflicts with an existing name. Please check if this is not expected.
+  return register_model(fn_wrapper)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/segment_anything/modeling/tiny_vit_sam.py:654: UserWarning: Overwriting tiny_vit_21m_224 in registry with controlnet_aux.segment_anything.modeling.tiny_vit_sam.tiny_vit_21m_224. This is because the name being registered conflicts with an existing name. Please check if this is not expected.
+  return register_model(fn_wrapper)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/segment_anything/modeling/tiny_vit_sam.py:654: UserWarning: Overwriting tiny_vit_21m_384 in registry with controlnet_aux.segment_anything.modeling.tiny_vit_sam.tiny_vit_21m_384. This is because the name being registered conflicts with an existing name. Please check if this is not expected.
+  return register_model(fn_wrapper)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/controlnet_aux/segment_anything/modeling/tiny_vit_sam.py:654: UserWarning: Overwriting tiny_vit_21m_512 in registry with controlnet_aux.segment_anything.modeling.tiny_vit_sam.tiny_vit_21m_512. This is because the name being registered conflicts with an existing name. Please check if this is not expected.
+  return register_model(fn_wrapper)
+ok
+test_02_seamless_convolutions (__main__.BackendCompatibility.test_02_seamless_convolutions) ... ok
+test_03_tiled_vae_and_accurate_preview (__main__.BackendCompatibility.test_03_tiled_vae_and_accurate_preview) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py:186: FutureWarning: The configuration file of this scheduler: DDIMScheduler {
+  "_class_name": "DDIMScheduler",
+  "_diffusers_version": "0.27.2",
+  "beta_end": 0.02,
+  "beta_schedule": "linear",
+  "beta_start": 0.0001,
+  "clip_sample": false,
+  "clip_sample_range": 1.0,
+  "dynamic_thresholding_ratio": 0.995,
+  "num_train_timesteps": 1000,
+  "prediction_type": "epsilon",
+  "rescale_betas_zero_snr": false,
+  "sample_max_value": 1.0,
+  "set_alpha_to_one": false,
+  "steps_offset": 0,
+  "thresholding": false,
+  "timestep_spacing": "leading",
+  "trained_betas": null
+}
+ is outdated. `steps_offset` should be set to 1 instead of 0. Please make sure to update the config accordingly as leaving `steps_offset` might led to incorrect results in future versions. If you have downloaded this checkpoint from the Hugging Face Hub, it would be very nice if you could open a Pull request for the `scheduler/scheduler_config.json` file
+  deprecate("steps_offset!=1", "1.0.0", deprecation_message, standard_warn=False)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion.py:851: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider using `callback_on_step_end`
+  deprecate(
+ok
+test_04_text_to_image_reproducible_and_seamless (__main__.BackendCompatibility.test_04_text_to_image_reproducible_and_seamless) ... ok
+test_05_image_to_image (__main__.BackendCompatibility.test_05_image_to_image) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py:226: FutureWarning: The configuration file of this scheduler: DDIMScheduler {
+  "_class_name": "DDIMScheduler",
+  "_diffusers_version": "0.27.2",
+  "beta_end": 0.02,
+  "beta_schedule": "linear",
+  "beta_start": 0.0001,
+  "clip_sample": false,
+  "clip_sample_range": 1.0,
+  "dynamic_thresholding_ratio": 0.995,
+  "num_train_timesteps": 1000,
+  "prediction_type": "epsilon",
+  "rescale_betas_zero_snr": false,
+  "sample_max_value": 1.0,
+  "set_alpha_to_one": false,
+  "steps_offset": 0,
+  "thresholding": false,
+  "timestep_spacing": "leading",
+  "trained_betas": null
+}
+ is outdated. `steps_offset` should be set to 1 instead of 0. Please make sure to update the config accordingly as leaving `steps_offset` might led to incorrect results in future versions. If you have downloaded this checkpoint from the Hugging Face Hub, it would be very nice if you could open a Pull request for the `scheduler/scheduler_config.json` file
+  deprecate("steps_offset!=1", "1.0.0", deprecation_message, standard_warn=False)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_img2img.py:942: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider use `callback_on_step_end`
+  deprecate(
+ok
+test_06_inpaint_alpha (__main__.BackendCompatibility.test_06_inpaint_alpha) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py:290: FutureWarning: The configuration file of this scheduler: DDIMScheduler {
+  "_class_name": "DDIMScheduler",
+  "_diffusers_version": "0.27.2",
+  "beta_end": 0.02,
+  "beta_schedule": "linear",
+  "beta_start": 0.0001,
+  "clip_sample": false,
+  "clip_sample_range": 1.0,
+  "dynamic_thresholding_ratio": 0.995,
+  "num_train_timesteps": 1000,
+  "prediction_type": "epsilon",
+  "rescale_betas_zero_snr": false,
+  "sample_max_value": 1.0,
+  "set_alpha_to_one": false,
+  "steps_offset": 0,
+  "thresholding": false,
+  "timestep_spacing": "leading",
+  "trained_betas": null
+}
+ is outdated. `steps_offset` should be set to 1 instead of 0. Please make sure to update the config accordingly as leaving `steps_offset` might led to incorrect results in future versions. If you have downloaded this checkpoint from the Hugging Face Hub, it would be very nice if you could open a Pull request for the `scheduler/scheduler_config.json` file
+  deprecate("steps_offset!=1", "1.0.0", deprecation_message, standard_warn=False)
+/workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_inpaint.py:1140: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider use `callback_on_step_end`
+  deprecate(
+ok
+test_07_depth_to_image (__main__.BackendCompatibility.test_07_depth_to_image) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/numpy/_core/fromnumeric.py:48: DeprecationWarning: __array_wrap__ must accept context and return_scalar arguments (positionally) in the future. (Deprecated NumPy 2.0)
+  return conv.wrap(result, to_scalar=False)
+ok
+test_08_controlnet_generation (__main__.BackendCompatibility.test_08_controlnet_generation) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/controlnet/pipeline_controlnet.py:1025: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider using `callback_on_step_end`
+  deprecate(
+ok
+test_09_controlnet_preprocessors (__main__.BackendCompatibility.test_09_controlnet_preprocessors) ... ok
+test_10_watermark_round_trip (__main__.BackendCompatibility.test_10_watermark_round_trip) ... ok
+test_11_sdxl_text_to_image (__main__.BackendCompatibility.test_11_sdxl_text_to_image) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion_xl/pipeline_stable_diffusion_xl.py:996: FutureWarning: `callback_steps` is deprecated and will be removed in version 1.0.0. Passing `callback_steps` as an input argument to `__call__` is deprecated, consider use `callback_on_step_end`
+  deprecate(
+ok
+test_12_upscale (__main__.BackendCompatibility.test_12_upscale) ... /workspace/scratch/540d5506d980/dreamtextures_build/runtime/test_config/dream_textures_compat/runtimes/cpu-test/diffusers/pipelines/stable_diffusion/pipeline_stable_diffusion_upscale.py:136: FutureWarning: The configuration file of the vae does not contain `scaling_factor` or it is set to 0.18215, which seems highly unlikely. If your checkpoint is a fine-tuned version of `stabilityai/stable-diffusion-x4-upscaler` you should change 'scaling_factor' to 0.08333 Please make sure to update the config accordingly, as not doing so might lead to incorrect results in future versions. If you have downloaded this checkpoint from the Hugging Face Hub, it would be very nice if you could open a Pull Request for the `vae/config.json` file
+  deprecate("wrong scaling_factor", "1.0.0", deprecation_message, standard_warn=False)
+ok
+test_13_download_progress_unknown_lengths (__main__.BackendCompatibility.test_13_download_progress_unknown_lengths) ... ok
+test_14_numpy2_grayscale_pillow_round_trip (__main__.BackendCompatibility.test_14_numpy2_grayscale_pillow_round_trip) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.460s
+
+OK

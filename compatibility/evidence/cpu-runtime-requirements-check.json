@@ -1,0 +1,318 @@
+{
+  "python": "3.13.13",
+  "checked": [
+    {
+      "name": "accelerate",
+      "required": "==1.1.1",
+      "installed": "1.1.1",
+      "matched": true
+    },
+    {
+      "name": "certifi",
+      "required": "==2026.10.18",
+      "installed": "2026.10.18",
+      "matched": true
+    },
+    {
+      "name": "charset-normalizer",
+      "required": "==3.5.2",
+      "installed": "3.5.2",
+      "matched": true
+    },
+    {
+      "name": "colorama",
+      "required": "==0.4.6",
+      "installed": "0.4.6",
+      "matched": true
+    },
+    {
+      "name": "contourpy",
+      "required": "==1.4.0",
+      "installed": "1.4.0",
+      "matched": true
+    },
+    {
+      "name": "controlnet_aux",
+      "required": "==0.0.10",
+      "installed": "0.0.10",
+      "matched": true
+    },
+    {
+      "name": "cycler",
+      "required": "==0.12.1",
+      "installed": "0.12.1",
+      "matched": true
+    },
+    {
+      "name": "diffusers",
+      "required": "==0.27.2",
+      "installed": "0.27.2",
+      "matched": true
+    },
+    {
+      "name": "einops",
+      "required": "==0.8.2",
+      "installed": "0.8.2",
+      "matched": true
+    },
+    {
+      "name": "filelock",
+      "required": "==4.2.4",
+      "installed": "4.2.4",
+      "matched": true
+    },
+    {
+      "name": "fonttools",
+      "required": "==4.67.0",
+      "installed": "4.67.0",
+      "matched": true
+    },
+    {
+      "name": "fsspec",
+      "required": "==2026.9.0",
+      "installed": "2026.9.0",
+      "matched": true
+    },
+    {
+      "name": "huggingface-hub",
+      "required": "==0.25.2",
+      "installed": "0.25.2",
+      "matched": true
+    },
+    {
+      "name": "idna",
+      "required": "==3.20",
+      "installed": "3.20",
+      "matched": true
+    },
+    {
+      "name": "ImageIO",
+      "required": "==2.38.1",
+      "installed": "2.38.1",
+      "matched": true
+    },
+    {
+      "name": "importlib_metadata",
+      "required": "==9.0.1",
+      "installed": "9.0.1",
+      "matched": true
+    },
+    {
+      "name": "invisible-watermark",
+      "required": "==0.2.0+dreamtextures1",
+      "installed": "0.2.0+dreamtextures1",
+      "matched": true
+    },
+    {
+      "name": "Jinja2",
+      "required": "==3.1.6",
+      "installed": "3.1.6",
+      "matched": true
+    },
+    {
+      "name": "kiwisolver",
+      "required": "==1.5.1",
+      "installed": "1.5.1",
+      "matched": true
+    },
+    {
+      "name": "lazy-loader",
+      "required": "==0.6",
+      "installed": "0.6",
+      "matched": true
+    },
+    {
+      "name": "MarkupSafe",
+      "required": "==3.0.4",
+      "installed": "3.0.4",
+      "matched": true
+    },
+    {
+      "name": "matplotlib",
+      "required": "==3.10.7",
+      "installed": "3.10.7",
+      "matched": true
+    },
+    {
+      "name": "mpmath",
+      "required": "==1.3.0",
+      "installed": "1.3.0",
+      "matched": true
+    },
+    {
+      "name": "networkx",
+      "required": "==3.7",
+      "installed": "3.7",
+      "matched": true
+    },
+    {
+      "name": "numpy",
+      "required": "==2.3.5",
+      "installed": "2.3.5",
+      "matched": true
+    },
+    {
+      "name": "opencolorio",
+      "required": "==2.4.2",
+      "installed": "2.4.2",
+      "matched": true
+    },
+    {
+      "name": "opencv-python-headless",
+      "required": "==4.11.0.86",
+      "installed": "4.11.0.86",
+      "matched": true
+    },
+    {
+      "name": "packaging",
+      "required": "==26.3",
+      "installed": "26.3",
+      "matched": true
+    },
+    {
+      "name": "pillow",
+      "required": "==12.0.0",
+      "installed": "12.0.0",
+      "matched": true
+    },
+    {
+      "name": "psutil",
+      "required": "==7.2.2",
+      "installed": "7.2.2",
+      "matched": true
+    },
+    {
+      "name": "pyparsing",
+      "required": "==3.3.3",
+      "installed": "3.3.3",
+      "matched": true
+    },
+    {
+      "name": "python-dateutil",
+      "required": "==2.9.0.post0",
+      "installed": "2.9.0.post0",
+      "matched": true
+    },
+    {
+      "name": "PyWavelets",
+      "required": "==1.10.0",
+      "installed": "1.10.0",
+      "matched": true
+    },
+    {
+      "name": "PyYAML",
+      "required": "==6.0.2",
+      "installed": "6.0.2",
+      "matched": true
+    },
+    {
+      "name": "regex",
+      "required": "==2026.9.29",
+      "installed": "2026.9.29",
+      "matched": true
+    },
+    {
+      "name": "requests",
+      "required": "==2.34.2",
+      "installed": "2.34.2",
+      "matched": true
+    },
+    {
+      "name": "safetensors",
+      "required": "==0.5.3",
+      "installed": "0.5.3",
+      "matched": true
+    },
+    {
+      "name": "scikit-image",
+      "required": "==0.25.2",
+      "installed": "0.25.2",
+      "matched": true
+    },
+    {
+      "name": "scipy",
+      "required": "==1.16.3",
+      "installed": "1.16.3",
+      "matched": true
+    },
+    {
+      "name": "setuptools",
+      "required": "==84.0.0",
+      "installed": "84.0.0",
+      "matched": true
+    },
+    {
+      "name": "six",
+      "required": "==1.17.0",
+      "installed": "1.17.0",
+      "matched": true
+    },
+    {
+      "name": "sympy",
+      "required": "==1.14.0",
+      "installed": "1.14.0",
+      "matched": true
+    },
+    {
+      "name": "tifffile",
+      "required": "==2026.10.15",
+      "installed": "2026.10.15",
+      "matched": true
+    },
+    {
+      "name": "timm",
+      "required": "==0.9.16",
+      "installed": "0.9.16",
+      "matched": true
+    },
+    {
+      "name": "tokenizers",
+      "required": "==0.21.1",
+      "installed": "0.21.1",
+      "matched": true
+    },
+    {
+      "name": "tqdm",
+      "required": "==4.70.1",
+      "installed": "4.70.1",
+      "matched": true
+    },
+    {
+      "name": "transformers",
+      "required": "==4.48.3",
+      "installed": "4.48.3",
+      "matched": true
+    },
+    {
+      "name": "typing_extensions",
+      "required": "==4.16.0",
+      "installed": "4.16.0",
+      "matched": true
+    },
+    {
+      "name": "urllib3",
+      "required": "==2.8.0",
+      "installed": "2.8.0",
+      "matched": true
+    },
+    {
+      "name": "zipp",
+      "required": "==4.1.1",
+      "installed": "4.1.1",
+      "matched": true
+    },
+    {
+      "name": "torch",
+      "required": "==2.9.1+cpu",
+      "installed": "2.9.1+cpu",
+      "matched": true
+    },
+    {
+      "name": "torchvision",
+      "required": "==0.24.1+cpu",
+      "installed": "0.24.1+cpu",
+      "matched": true
+    }
+  ],
+  "mismatches": []
+}

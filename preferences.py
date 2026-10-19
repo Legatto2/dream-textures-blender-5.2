@@ -3,18 +3,33 @@ from bpy.props import CollectionProperty, StringProperty
 from bpy_extras.io_utils import ImportHelper
 import os
 import webbrowser
-import importlib.util
-import site
+import textwrap
 
 from .absolute_path import absolute_path
-from .operators.install_dependencies import InstallDependencies, UninstallDependencies
-from .operators.open_latest_version import OpenLatestVersion
+from .operators.install_dependencies import (
+    InstallDependencies, UninstallDependencies, CancelDependencyInstall,
+    VerifyRuntime, OpenRuntimeLog, RestorePreviousRuntime,
+    current_runtime_status, current_job_status, job_running,
+)
 from .ui.presets import RestoreDefaultPresets, default_presets_missing
 from .generator_process import Generator
 from .generator_process.actions.huggingface_hub import DownloadStatus, Model as HubModel
 from .generator_process.models import Checkpoint, ModelConfig, ModelType
 
 is_downloading = False
+_preferences_generation = None
+_initial_models_timer = None
+
+
+def _preferences_for_callback(generation):
+    """Old worker callbacks must not touch preferences after disable or reload."""
+    if generation is None or generation is not _preferences_generation:
+        return None
+    try:
+        addon = bpy.context.preferences.addons.get(__package__)
+        return addon.preferences if addon is not None else None
+    except (AttributeError, ReferenceError, RuntimeError):
+        return None
 
 class OpenURL(bpy.types.Operator):
     bl_idname = "dream_textures.open_url"
@@ -52,15 +67,23 @@ class ImportWeights(bpy.types.Operator, ImportHelper):
     def execute(self, context):
         global is_downloading
         is_downloading = True
+        generation = _preferences_generation
         f = Generator.shared().convert_original_stable_diffusion_to_diffusers(self.filepath, ModelConfig[self.model_config], self.prefer_fp16_variant)
         def on_progress(_, response: DownloadStatus):
-            bpy.context.preferences.addons[__package__].preferences.download_file = response.file
-            bpy.context.preferences.addons[__package__].preferences.download_progress = int((response.index / response.total) * 100)
+            pref = _preferences_for_callback(generation)
+            if pref is not None:
+                pref.download_file = response.file
+                pref.download_progress = int((response.index / max(response.total, 1)) * 100)
         def on_done(future):
             global is_downloading
+            if _preferences_for_callback(generation) is None:
+                return
             is_downloading = False
-            fetch_installed_models()
+            if future.exception() is None:
+                fetch_installed_models()
         def on_exception(_, exception):
+            if _preferences_for_callback(generation) is None:
+                return
             self.report({"ERROR"}, str(exception))
             raise exception
         f.add_response_callback(on_progress)
@@ -99,9 +122,12 @@ class PREFERENCES_UL_ModelList(bpy.types.UIList):
         install_model.resume_download = data.resume_download
 
 def set_model_list(model_list: str, models: list):
-    getattr(bpy.context.preferences.addons[__package__].preferences, model_list).clear()
+    pref = _preferences_for_callback(_preferences_generation)
+    if pref is None:
+        return
+    getattr(pref, model_list).clear()
     for model in models:
-        m = getattr(bpy.context.preferences.addons[__package__].preferences, model_list).add()
+        m = getattr(pref, model_list).add()
         m.model = model.id
         m.model_base = os.path.basename(model.id)
         m.downloads = model.downloads
@@ -126,12 +152,18 @@ class model_lookup:
         return cls._models.get(item, None)
 
 def fetch_installed_models(blocking=True):
+    if not current_runtime_status()["ready"]:
+        return
+    generation = _preferences_generation
+
     def on_done(future):
+        pref = _preferences_for_callback(generation)
+        if pref is None:
+            return
         model_list = future.result()
 
         model_lookup._models = { os.path.basename(model.id).replace('models--', '').replace('--', '/'): model for model in model_list }
 
-        pref = bpy.context.preferences.addons[__package__].preferences
         checkpoint_links = ((link.path, ModelConfig[link.model_config]) for link in pref.linked_checkpoints)
         checkpoints = {}
         for path, config in checkpoint_links:
@@ -192,6 +224,7 @@ class InstallModel(bpy.types.Operator):
         else:
             global is_downloading
             is_downloading = True
+            generation = _preferences_generation
             f = Generator.shared().hf_snapshot_download(
                 self.model,
                 bpy.context.preferences.addons[__package__].preferences.hf_token,
@@ -199,13 +232,20 @@ class InstallModel(bpy.types.Operator):
                 self.resume_download
             )
             def on_progress(_, response: DownloadStatus):
-                bpy.context.preferences.addons[__package__].preferences.download_file = response.file
-                bpy.context.preferences.addons[__package__].preferences.download_progress = int((response.index / response.total) * 100)
+                pref = _preferences_for_callback(generation)
+                if pref is not None:
+                    pref.download_file = response.file
+                    pref.download_progress = int((response.index / max(response.total, 1)) * 100)
             def on_done(future):
                 global is_downloading
+                if _preferences_for_callback(generation) is None:
+                    return
                 is_downloading = False
-                fetch_installed_models()
+                if future.exception() is None:
+                    fetch_installed_models()
             def on_exception(_, exception):
+                if _preferences_for_callback(generation) is None:
+                    return
                 self.report({"ERROR"}, str(exception))
                 raise exception
             f.add_response_callback(on_progress)
@@ -214,7 +254,12 @@ class InstallModel(bpy.types.Operator):
         return {"FINISHED"}
 
 def _model_search(self, context):
+    if not current_runtime_status()["ready"]:
+        return
+    generation = _preferences_generation
     def on_done(future):
+        if _preferences_for_callback(generation) is None:
+            return
         set_model_list('model_results', future.result())
     Generator.shared().hf_list_models(self.model_query, self.hf_token).add_done_callback(on_done)
 
@@ -321,12 +366,12 @@ class PREFERENCES_UL_CheckpointList(bpy.types.UIList):
 class StableDiffusionPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
-    dream_studio_key: StringProperty(name="DreamStudio Key")
+    dream_studio_key: StringProperty(name="DreamStudio Key", subtype='PASSWORD')
 
     model_query: StringProperty(name="Search", update=_model_search)
     model_results: CollectionProperty(type=Model)
     active_model_result: bpy.props.IntProperty(name="Active Model", default=0)
-    hf_token: StringProperty(name="HuggingFace Token")
+    hf_token: StringProperty(name="HuggingFace Token", subtype='PASSWORD')
     prefer_fp16_variant: bpy.props.BoolProperty(name="Prefer Half Precision Weights", description="Download fp16 weights if available for smaller file size. If you run with 'Half Precision' disabled, you should not use this setting", default=True)
     resume_download: bpy.props.BoolProperty(name="Resume Incomplete Download", description="Continue an in-progress download in case if Blender was closed or connection was interrupted, otherwise incomplete files will be entirely redownloaded", default=True)
 
@@ -343,7 +388,30 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
 
     @staticmethod
     def register():
-        fetch_installed_models(False)
+        # The preferences entry is added after class registration. Even an
+        # already installed runtime must wait until Blender finishes enabling.
+        global _preferences_generation, _initial_models_timer
+        generation = _preferences_generation = object()
+
+        def initial_refresh():
+            global _initial_models_timer
+            _initial_models_timer = None
+            if _preferences_for_callback(generation) is not None and current_runtime_status()["ready"]:
+                fetch_installed_models(False)
+            return None
+
+        _initial_models_timer = initial_refresh
+        bpy.app.timers.register(initial_refresh, first_interval=0.1)
+
+    @staticmethod
+    def unregister():
+        global _preferences_generation, _initial_models_timer, is_downloading
+        _preferences_generation = None
+        is_downloading = False
+        if _initial_models_timer is not None:
+            if bpy.app.timers.is_registered(_initial_models_timer):
+                bpy.app.timers.unregister(_initial_models_timer)
+            _initial_models_timer = None
 
     def draw(self, context):
         layout = self.layout
@@ -353,33 +421,44 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
         if not weights_installed:
             layout.label(text="Complete the following steps to finish setting up the addon:")
 
-        has_dependencies = len(os.listdir(absolute_path(".python_dependencies"))) > 2
+        runtime = current_runtime_status()
+        runtime_box = layout.box()
+        runtime_box.label(text="Dream Textures — Blender 5.2 Compatibility", icon="PREFERENCES")
+        if runtime["restart_required"]:
+            runtime_box.label(text="Dependencies installed. Restart Blender to continue.", icon="FILE_REFRESH")
+        elif runtime["ready"]:
+            manifest = runtime["manifest"]
+            runtime_box.label(text="GPU runtime checked: " + manifest.get("device", "CUDA available"), icon="CHECKMARK")
+            versions = manifest.get("packages", {})
+            runtime_box.label(text="PyTorch " + versions.get("torch", "installed") + " · CUDA " + str(manifest.get("cuda_version", "test runtime")))
+        else:
+            runtime_box.label(text="Install the GPU dependencies to finish setup.", icon="INFO")
+            runtime_box.label(text="Uses Blender's Python 3.13 and a private CUDA 12.8 runtime.")
+
+        status = current_job_status()
+        if status:
+            phase = status.get("phase", "")
+            icon = "ERROR" if phase == "failed" else "INFO"
+            for line in textwrap.wrap(status.get("message", ""), width=85):
+                runtime_box.label(text=line, icon=icon)
+        row = runtime_box.row(align=True)
+        row.operator(InstallDependencies.bl_idname, text="Reinstall GPU Dependencies" if runtime["selected"] else "Install GPU Dependencies", icon="IMPORT")
+        if job_running():
+            row.operator(CancelDependencyInstall.bl_idname, icon="CANCEL")
+        else:
+            row.operator(VerifyRuntime.bl_idname, icon="CHECKMARK")
+        runtime_box.operator(OpenRuntimeLog.bl_idname, icon="TEXT")
+        if runtime["previous"]:
+            runtime_box.operator(RestorePreviousRuntime.bl_idname, icon="RECOVER_LAST")
+
+        has_dependencies = runtime["ready"]
         if has_dependencies:
             if not _template_model_download_progress(context, layout):
-                conflicting_packages = ["wandb", "k_diffusion"]
-                conflicting_package_specs = {}
-                for package in conflicting_packages:
-                    spec = importlib.util.find_spec(package)
-                    if spec is not None:
-                        conflicting_package_specs[package] = spec
-                if len(conflicting_package_specs) > 0:
-                    conflicts_box = layout.box()
-                    conflicts_box.label(text="WARNING", icon="ERROR")
-                    conflicts_box.label(text=f"The following packages conflict with Dream Textures: {', '.join(conflicting_packages)}")
-                    conflicts_box.label(text=f"You may need to run Blender as an administrator to remove these packages")
-                    conflicts_box.operator(UninstallDependencies.bl_idname, text="Uninstall Conflicting Packages", icon="CANCEL").conflicts = ' '.join(conflicting_packages)
-                    conflicts_box.label(text=f"If the button above fails, you can remove the following folders manually:")
-                    for package in conflicting_packages:
-                        if package not in conflicting_package_specs:
-                            continue
-                        location = conflicting_package_specs[package].submodule_search_locations[0]
-                        conflicts_box.operator(OpenURL.bl_idname, text=f"Open '{location}'").url = f"file://{location}"
-
                 if not weights_installed:
                     default_weights_box = layout.box()
                     default_weights_box.label(text="You need to download at least one model.")
-                    install_model = default_weights_box.operator(InstallModel.bl_idname, text="Download Stable Diffusion v2.1 (Recommended)", icon="IMPORT")
-                    install_model.model = "stabilityai/stable-diffusion-2-1"
+                    install_model = default_weights_box.operator(InstallModel.bl_idname, text="Download Stable Diffusion 1.5", icon="IMPORT")
+                    install_model.model = "stable-diffusion-v1-5/stable-diffusion-v1-5"
                     install_model.prefer_fp16_variant = self.prefer_fp16_variant
                     install_model.resume_download = self.resume_download
 
@@ -421,28 +500,15 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
                 presets_box.label(text="It looks like you removed some of the default presets.")
                 presets_box.label(text="You can restore them here.")
                 presets_box.operator(RestoreDefaultPresets.bl_idname, icon="RECOVER_LAST")
-        else:
-            missing_dependencies_box = layout.box()
-            missing_dependencies_box.label(text="Dependencies Missing", icon="ERROR")
-            missing_dependencies_box.label(text="You've likely downloaded source instead of release by accident.")
-            missing_dependencies_box.label(text="Follow the instructions to install for your platform.")
-            missing_dependencies_box.operator(OpenLatestVersion.bl_idname, text="Download Latest Release")
-        
+        elif not runtime["restart_required"]:
+            layout.label(text="After installation, restart Blender and download or link a model.")
+
         contributors_box = layout.box()
         contributors_box.label(text="Contributors", icon="COMMUNITY")
         contributors_box.label(text="Dream Textures is made possible by the contributors on GitHub.")
         contributors_box.operator(OpenURL.bl_idname, text="See All Contributors", icon="URL").url = "https://github.com/carson-katri/dream-textures/graphs/contributors"
 
-        if context.preferences.view.show_developer_ui: # If 'Developer Extras' is enabled, show addon development tools
+        if context.preferences.view.show_developer_ui:
             developer_box = layout.box()
-            developer_box.label(text="Development Tools", icon="CONSOLE")
-            warn_box = developer_box.box()
-            warn_box.label(text="WARNING", icon="ERROR")
-            warn_box.label(text="This section is for addon development only.")
-            warn_box.label(text="Do not use any operators in this section unless you are setting up a development environment.")
-            if has_dependencies:
-                warn_box = developer_box.box()
-                warn_box.label(text="Dependencies already installed. Only install below if you developing the addon", icon="CHECKMARK")
-            developer_box.prop(context.scene, 'dream_textures_requirements_path')
-            developer_box.operator_context = 'INVOKE_DEFAULT'
-            developer_box.operator(InstallDependencies.bl_idname, icon="CONSOLE")
+            developer_box.label(text="Runtime Maintenance", icon="CONSOLE")
+            developer_box.operator(UninstallDependencies.bl_idname, icon="TRASH")

@@ -98,6 +98,13 @@ class BakeControlNetImage(bpy.types.Operator):
 
     index: IntProperty(name="Index")
 
+    @classmethod
+    def poll(cls, context):
+        if not Generator.runtime_available():
+            cls.poll_message_set("Install Dream Textures dependencies in Preferences, then restart Blender.")
+            return False
+        return Generator.shared().can_use()
+
     def execute(self, context):
         prompt = context.scene.dream_textures_prompt
 

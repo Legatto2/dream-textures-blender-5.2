@@ -5,7 +5,7 @@ from bl_ui.properties_output import RenderOutputButtonsPanel
 from bl_ui.properties_view_layer import ViewLayerButtonsPanel
 import numpy as np
 from ..ui.panels.dream_texture import optimization_panels
-from .node_tree import DreamTexturesNodeTree
+from .node_tree import DreamTexturesNodeTree, input_sockets
 from ..engine import node_executor
 from .annotations import depth
 from ..property_groups.dream_prompt import backend_options
@@ -22,12 +22,6 @@ class DreamTexturesRenderEngine(bpy.types.RenderEngine):
     bl_use_preview = False
     bl_use_postprocess = True
     bl_use_gpu_context = actor.main_thread_rendering
-
-    def __init__(self):
-        pass
-
-    def __del__(self):
-        pass
 
     def render(self, depsgraph):
         scene = depsgraph.scene
@@ -76,12 +70,10 @@ class NewEngineNodeTree(bpy.types.Operator):
     bl_label = "New Node Tree"
 
     def execute(self, context):
-        # TODO: Get the name of the default node tree from a config file
-        # TODO: type is deprecated https://docs.blender.org/api/current/bpy.types.NodeTree.html 
-        #       When testing the type of the resulting node tree using  bpy.data.node_groups['Dream Textures Node Tree'].type it is '' because of that
-        bpy.ops.node.new_node_tree(type=DreamTexturesNodeTree.bl_idname, name="Dream Textures Node Editor")
-        # Get the newly generated node tree
-        node_tree = bpy.data.node_groups[-1]
+        node_tree = bpy.data.node_groups.new(
+            name="Dream Textures Node Editor", type=DreamTexturesNodeTree.bl_idname
+        )
+        context.scene.dream_textures_render_engine.node_tree = node_tree
         node_sd = node_tree.nodes.new(type=NodeStableDiffusion.bl_idname)
         node_sd.location = (200, 200)
         node_out = node_tree.nodes.new(type="NodeGroupOutput")
@@ -97,7 +89,7 @@ class NewEngineNodeTree(bpy.types.Operator):
         node_tree.links.new(node_props.outputs['Resolution X'], node_sd.inputs['Width'])
         node_tree.links.new(node_props.outputs['Resolution Y'], node_sd.inputs['Height'])
         # in case the node editor is open, synchronize the open node trees:
-        for area in context.screen.areas:
+        for area in context.screen.areas if context.screen is not None else ():
             if area.type == 'NODE_EDITOR':
                 if area.spaces.active.tree_type == DreamTexturesNodeTree.bl_idname:
                     area.spaces.active.node_tree = node_tree
@@ -127,12 +119,22 @@ class DreamTexturesRenderEngineProperties(bpy.types.PropertyGroup):
     node_tree: bpy.props.PointerProperty(type=DreamTexturesNodeTree, name="Node Tree", poll=_poll_node_tree)
     backend: bpy.props.EnumProperty(name="Backend", items=backend_options, default=0, description="The backend to use for all pipeline nodes", update=_update_engine_backend)
 
+COMPATIBILITY_PANELS = (
+    "RENDER_PT_output", "RENDER_PT_color_management", "RENDER_PT_stamp",
+    "RENDER_PT_format", "DATA_PT_lens",
+)
+
+
+def set_panel_compatibility(enabled):
+    for name in COMPATIBILITY_PANELS:
+        engines = getattr(bpy.types, name).COMPAT_ENGINES
+        if enabled:
+            engines.add(DreamTexturesRenderEngine.bl_idname)
+        else:
+            engines.discard(DreamTexturesRenderEngine.bl_idname)
+
+
 def engine_panels():
-    bpy.types.RENDER_PT_output.COMPAT_ENGINES.add(DreamTexturesRenderEngine.bl_idname)
-    bpy.types.RENDER_PT_color_management.COMPAT_ENGINES.add(DreamTexturesRenderEngine.bl_idname)
-    bpy.types.RENDER_PT_stamp.COMPAT_ENGINES.add(DreamTexturesRenderEngine.bl_idname)
-    bpy.types.RENDER_PT_format.COMPAT_ENGINES.add(DreamTexturesRenderEngine.bl_idname)
-    bpy.types.DATA_PT_lens.COMPAT_ENGINES.add(DreamTexturesRenderEngine.bl_idname)
     def get_prompt(context):
         return context.scene.dream_textures_engine_prompt
     class RenderPanel(bpy.types.Panel, RenderButtonsPanel):
@@ -166,9 +168,10 @@ def engine_panels():
             layout.use_property_split = True
 
             node_tree = context.scene.dream_textures_render_engine.node_tree
-            if node_tree is not None and hasattr(node_tree, "inputs"):
-                for input in node_tree.inputs:
-                    layout.prop(input, "default_value", text=input.name)
+            if node_tree is not None:
+                for input in input_sockets(node_tree):
+                    if hasattr(input, "default_value"):
+                        layout.prop(input, "default_value", text=input.name)
     yield NodeTreeInputsPanel
 
     # View Layer

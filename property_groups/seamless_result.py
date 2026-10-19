@@ -22,7 +22,7 @@ class SeamlessResult(bpy.types.PropertyGroup):
     result: bpy.props.StringProperty(name="Auto-detected", update=update, default=SeamlessAxes.OFF.text)
 
     def check(self, image):
-        if image == self.image or not Generator.shared().can_use():
+        if not Generator.runtime_available() or image == self.image or not Generator.shared().can_use():
             return
 
         if image is not None and (hash_string := image.get('dream_textures_hash', None)) is not None:

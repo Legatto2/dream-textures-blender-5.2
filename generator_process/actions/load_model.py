@@ -207,7 +207,7 @@ def load_model(self, model_class, model, optimizations, scheduler, controlnet=No
         clear_models = set(model_cache).difference(expected_models)
         for name in clear_models:
             model_cache.pop(name)
-        for pipe in model_cache.items():
+        for pipe in model_cache.values():
             if isinstance(getattr(pipe, "controlnet", None), MultiControlNetModel):
                 # make sure no longer needed ControlNetModels are cleared
                 # the MultiControlNetModel container will be remade

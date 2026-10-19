@@ -116,15 +116,25 @@ def _render_dream_textures_pass(self, layer, size, scene, render_pass, render_re
             )
     event = threading.Event()
     dream_pixels = None
+    generation_error = None
     def step_callback(progress: List[api.GenerationResult]) -> bool:
         self.update_progress(progress[-1].progress / progress[-1].total)
         image_utils.np_to_render_pass(progress[-1].image, render_pass)
         self.update_result(render_result) # This does not seem to have an effect.
         return True
     def callback(results: List[api.GenerationResult] | Exception):
-        nonlocal dream_pixels
-        dream_pixels = results[-1].image
-        event.set()
+        nonlocal dream_pixels, generation_error
+        try:
+            if isinstance(results, Exception):
+                generation_error = results
+            elif not results or results[-1].image is None:
+                generation_error = RuntimeError("Dream Textures returned no image.")
+            else:
+                dream_pixels = results[-1].image
+        except Exception as error:
+            generation_error = error
+        finally:
+            event.set()
     
     backend: api.Backend = prompt.get_backend()
     generated_args: api.GenerationArguments = prompt.generate_args(bpy.context)
@@ -138,6 +148,8 @@ def _render_dream_textures_pass(self, layer, size, scene, render_pass, render_re
     )
 
     event.wait()
+    if generation_error is not None:
+        raise generation_error
 
     # Perform an inverse transform so when Blender applies its transform everything looks correct.
     self.update_stats("Dream Textures", "Applying inverse color management transforms")

@@ -38,6 +38,9 @@ class DreamTexture(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
+        if not Generator.runtime_available():
+            cls.poll_message_set("Install Dream Textures dependencies in Preferences, then restart Blender.")
+            return False
         try:
             prompt = context.scene.dream_textures_prompt
             backend: api.Backend = prompt.get_backend()

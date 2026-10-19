@@ -12,11 +12,12 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 bl_info = {
-    "name": "Dream Textures",
+    "name": "Dream Textures (Blender 5.2 Compatibility)",
     "author": "Dream Textures contributors",
     "description": "Use Stable Diffusion to generate unique textures straight from the shader editor.",
-    "blender": (3, 1, 0),
-    "version": (0, 4, 1),
+    "blender": (5, 2, 0),
+    "version": (0, 4, 2),
+    "warning": "Community compatibility build for Blender 5.2 / Windows NVIDIA",
     "location": "Image Editor -> Sidebar -> Dream",
     "category": "Paint"
 }
@@ -38,7 +39,7 @@ if current_process().name != "__actor__":
 
     from .render_pass import register_render_pass, unregister_render_pass, pass_inputs
     from .prompt_engineering import *
-    from .operators.open_latest_version import check_for_updates
+    from .operators.install_dependencies import shutdown_installer
     from .operators.project import framebuffer_arguments
     from .classes import CLASSES, PREFERENCE_CLASSES
     from .tools import TOOLS
@@ -73,7 +74,8 @@ if current_process().name != "__actor__":
         
         bpy.types.Scene.dream_textures_history = CollectionProperty(type=DreamPrompt)
 
-        check_for_updates()
+        # This compatibility build must not be replaced by an older upstream
+        # binary package. The upstream releases link remains available manually.
 
         bpy.types.Scene.dream_textures_prompt = PointerProperty(type=DreamPrompt)
         bpy.types.Scene.dream_textures_prompt_file = PointerProperty(type=bpy.types.Text)
@@ -134,21 +136,38 @@ if current_process().name != "__actor__":
         bpy.utils.register_class(DiffusersBackend)
 
     def unregister():
-        for cls in PREFERENCE_CLASSES:
-            bpy.utils.unregister_class(cls)
-
-        for cls in CLASSES:
-            bpy.utils.unregister_class(cls)
-        for tool in TOOLS:
-            bpy.utils.unregister_tool(tool)
-
+        shutdown_installer()
+        kill_generator()
+        unregister_render_pass()
         bpy.types.RENDER_PT_context.remove(engine.draw_device)
 
+        for tool in reversed(TOOLS):
+            bpy.utils.unregister_tool(tool)
+
+        # Remove RNA properties before unregistering the PropertyGroups they use.
+        for name in (
+            "dream_textures_requirements_path", "dream_textures_history",
+            "dream_textures_prompt", "dream_textures_prompt_file",
+            "init_img", "init_mask", "init_depth", "seamless_result",
+            "dream_textures_history_selection", "dream_textures_history_selection_preview",
+            "dream_textures_progress", "dream_textures_info", "dream_textures_last_execution_time",
+            "dream_textures_viewport_enabled", "dream_textures_render_properties_enabled",
+            "dream_textures_render_properties_prompt", "dream_textures_render_properties_pass_inputs",
+            "dream_textures_upscale_prompt", "dream_textures_upscale_tile_size",
+            "dream_textures_upscale_blend", "dream_textures_upscale_seamless_result",
+            "dream_textures_project_prompt", "dream_textures_project_framebuffer_arguments",
+            "dream_textures_project_bake", "dream_textures_project_use_control_net",
+            "dream_textures_render_engine",
+        ):
+            if hasattr(bpy.types.Scene, name):
+                delattr(bpy.types.Scene, name)
+
+        for cls in reversed(CLASSES):
+            bpy.utils.unregister_class(cls)
+
         engine.unregister()
-        
-        unregister_render_pass()
 
         # Unregister the default backend
         bpy.utils.unregister_class(DiffusersBackend)
-
-        kill_generator()
+        for cls in reversed(PREFERENCE_CLASSES):
+            bpy.utils.unregister_class(cls)

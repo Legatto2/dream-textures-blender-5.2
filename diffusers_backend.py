@@ -47,7 +47,7 @@ class DiffusersBackend(Backend):
             ("model", "Model", "Some memory savings with minimal speed penalty", 1),
             ("submodule", "Submodule", "Better memory savings with large speed penalty", 2)
         ),
-        default=0,
+        default="model",
         description="Dynamically moves models in and out of device memory for reduced memory usage with reduced speed"
     )
     channels_last_memory_format: BoolProperty(name="Channels Last Memory Format", description="An alternative way of ordering NCHW tensors that may be faster or slower depending on the device", default=False)

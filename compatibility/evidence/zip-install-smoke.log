@@ -1,0 +1,15 @@
+Blender: 5.2.2 LTS
+Archive: /workspace/scratch/540d5506d980/dreamtextures_build/Dream-Textures-0.4.2-compat1-Blender52-Windows.zip
+SHA256: 733b8ceb79c73d692d14a6467d69d0f9344d8810cb0afaac202b95e32583646d
+Disposable profile: /tmp/dreamtextures-zip-install-smoke-v1
+addon_utils.disable: dream_textures not loaded
+Modules Installed (dream_textures) from '/workspace/scratch/540d5506d980/dreamtextures_build/Dream-Textures-0.4.2-compat1-Blender52-Windows.zip' into '/tmp/dreamtextures-zip-install-smoke-v1/scripts/addons'
+Info: Modules Installed (dream_textures) from '/workspace/scratch/540d5506d980/dreamtextures_build/Dream-Textures-0.4.2-compat1-Blender52-Windows.zip' into '/tmp/dreamtextures-zip-install-smoke-v1/scripts/addons'
+PASS: actual distributable ZIP installed through Blender's add-on installer
+PASS: installed copy enabled from /tmp/dreamtextures-zip-install-smoke-v1/scripts/addons/dream_textures/__init__.py
+PASS: version (0, 4, 2); CPU offload default 'model'
+PASS: installed copy disabled; RNA properties removed and Cycles restored
+ZIP INSTALL SMOKE: PASS
+Blender 5.2.2 LTS (hash d13f752e3b9c built 2026-09-15 01:34:58)
+
+Blender quit

@@ -677,7 +677,7 @@ def np_to_render_pass(
     if inverse_color_management:
         array = scene_color_transform(array, inverse=True, color_space=color_space)
     elif color_space is not None:
-        array = color_transform(color_space, "Linear")
+        array = color_transform(array, color_space, "Linear")
     if channels(array) != render_pass.channels:
         match render_pass.channels:
             case 1:
@@ -730,7 +730,7 @@ def np_to_pil(array: NDArray, *, mode: Literal["RGB", "RGBA", "L", "LA"] | None 
     if mode is None:
         if channels(array) == 1 and array.ndim == 3:
             # PIL L mode can't have a channel dimension
-            array = array[..., 1]
+            array = array[..., 0]
     else:
         array = _mode(array, mode)
     # PIL does support higher precision modes for a single channel, but I don't see a need for supporting them yet.

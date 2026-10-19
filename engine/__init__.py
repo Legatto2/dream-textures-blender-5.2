@@ -71,6 +71,7 @@ categories = [
 ]
 
 def register():
+    set_panel_compatibility(True)
     # Prompt
     bpy.types.Scene.dream_textures_engine_prompt = bpy.props.PointerProperty(type=DreamPrompt)
     
@@ -129,6 +130,10 @@ def register():
     nodeitems_utils.register_node_categories("DREAM_TEXTURES_CATEGORIES", categories)
 
 def unregister():
+    set_panel_compatibility(False)
+    del bpy.types.Scene.dream_textures_engine_prompt
+    nodeitems_utils.unregister_node_categories("DREAM_TEXTURES_CATEGORIES")
+
     # OpenPose
     del bpy.types.Armature.dream_textures_openpose
     bpy.utils.unregister_class(openpose.ArmatureOpenPoseData)
@@ -139,12 +144,10 @@ def unregister():
     del bpy.types.Object.dream_textures_ade20k
     bpy.utils.unregister_class(ade20k.ObjectADE20KData)
 
-    bpy.utils.unregister_class(DreamTexturesNodeTree)
-    
     # Nodes
-    bpy.utils.unregister_class(NodeSocketControlNet)
     bpy.utils.unregister_class(NodeStableDiffusion)
     bpy.utils.unregister_class(NodeControlNet)
+    bpy.utils.unregister_class(NodeSocketControlNet)
 
     bpy.utils.unregister_class(NodeInteger)
     bpy.utils.unregister_class(NodeString)
@@ -175,4 +178,4 @@ def unregister():
     bpy.utils.unregister_class(NodeCompare)
     bpy.utils.unregister_class(NodeReplaceString)
 
-    nodeitems_utils.unregister_node_categories("DREAM_TEXTURES_CATEGORIES")
+    bpy.utils.unregister_class(DreamTexturesNodeTree)

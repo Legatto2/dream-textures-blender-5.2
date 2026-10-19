@@ -20,9 +20,6 @@ class NodeSocketControlNet(bpy.types.NodeSocket):
     bl_idname = "NodeSocketControlNet"
     bl_label = "ControlNet Socket"
 
-    def __init__(self):
-        self.link_limit = 0
-
     def draw(self, context, layout, node, text):
         layout.label(text=text)
 
@@ -95,7 +92,7 @@ class NodeStableDiffusion(DreamTexturesNode):
         self.inputs.new("NodeSocketInt", "Seed")
         self.inputs.new("NodeSocketFloat", "CFG Scale").default_value = 7.50
         
-        self.inputs.new("NodeSocketControlNet", "ControlNets")
+        self.inputs.new("NodeSocketControlNet", "ControlNets").link_limit = 0
 
         self.outputs.new("NodeSocketColor", "Image")
 
@@ -205,7 +202,7 @@ class NodeControlNet(DreamTexturesNode):
         self.inputs.new("NodeSocketColor", "Image")
         self.inputs.new("NodeSocketFloat", "Conditioning Scale").default_value = 1
 
-        self.outputs.new(NodeSocketControlNet.bl_idname, "Control")
+        self.outputs.new(NodeSocketControlNet.bl_idname, "Control").link_limit = 0
 
         _update_control_net_sockets(self, context)
 

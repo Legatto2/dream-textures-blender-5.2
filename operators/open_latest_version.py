@@ -1,4 +1,5 @@
-import requests
+import json
+import urllib.request
 import bpy
 import webbrowser
 from ..version import VERSION, version_tag, version_tuple
@@ -8,10 +9,16 @@ REPO_NAME = "dream-textures"
 
 latest_version = VERSION
 def check_for_updates():
+    if not getattr(bpy.app, "online_access", True):
+        return
     try:
         global latest_version
-        response = requests.get(f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases")
-        releases = response.json()
+        request = urllib.request.Request(
+            f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/releases",
+            headers={"User-Agent": "DreamTextures-Compatibility"},
+        )
+        with urllib.request.urlopen(request, timeout=5) as response:
+            releases = json.load(response)
         latest_version = version_tuple(releases[0]['tag_name'])
     except:
         pass

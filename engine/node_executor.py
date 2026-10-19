@@ -1,4 +1,5 @@
 import bpy
+from .node_tree import input_sockets
 # from dream_textures.engine import node_executor
 # node_executor.execute(bpy.data.node_groups["NodeTree"], bpy.context.evaluated_depsgraph_get())
 
@@ -42,8 +43,8 @@ class NodeExecutionContext:
                     case 'GROUP_INPUT':
                         self.start(node)
                         result = {
-                            input.name: input.default_value
-                            for input in self.depsgraph.scene.dream_textures_render_engine.node_tree.inputs
+                            input.name: getattr(input, 'default_value', None)
+                            for input in input_sockets(node.id_data)
                         }
                     case 'GROUP_OUTPUT':
                         self.start(node)

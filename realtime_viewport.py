@@ -144,7 +144,7 @@ def register_realtime_viewport():
         viewport_info = gpu.state.viewport_get()
         width = viewport_info[2]
         height = viewport_info[3]
-        shader = gpu.shader.from_builtin("2D_IMAGE")
+        shader = gpu.shader.from_builtin("IMAGE" if bpy.app.version >= (4, 0, 0) else "2D_IMAGE")
         shader.bind()
         shader.uniform_sampler("image", texture)
         batch = batch_for_shader(shader, 'TRI_FAN', {

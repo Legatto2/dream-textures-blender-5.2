@@ -1,179 +1,287 @@
-import bpy
+"""Non-blocking Blender controls for the private compatibility runtime."""
+
+import contextlib
+import datetime
 import os
-import site
-import sys
-import sysconfig
+from pathlib import Path
+import shutil
 import subprocess
-import requests
-import tarfile
-from enum import IntEnum
+import sys
+import uuid
+
+import bpy
 
 from ..absolute_path import absolute_path
+from .. import compatibility_installer as installer
 from ..generator_process import Generator
 
-class PipInstall(IntEnum):
-    DEPENDENCIES = 1
-    STANDARD = 2
-    USER_SITE = 3
+_JOB = None
+_LAST_STATUS = {}
+_LATEST_LOG = None
 
-def install_pip(method = PipInstall.STANDARD):
-    """
-    Installs pip if not already present. Please note that ensurepip.bootstrap() also calls pip, which adds the
-    environment variable PIP_REQ_TRACKER. After ensurepip.bootstrap() finishes execution, the directory doesn't exist
-    anymore. However, when subprocess is used to call pip, in order to install a package, the environment variables
-    still contain PIP_REQ_TRACKER with the now nonexistent path. This is a problem since pip checks if PIP_REQ_TRACKER
-    is set and if it is, attempts to use it as temp directory. This would result in an error because the
-    directory can't be found. Therefore, PIP_REQ_TRACKER needs to be removed from environment variables.
-    :return:
-    """
 
-    import ensurepip
+def data_root():
+    return installer.runtime_data_root(bpy.utils.user_resource('CONFIG'))
 
-    if method == PipInstall.DEPENDENCIES:
-        # ensurepip doesn't have a useful way of installing to a specific directory.
-        # root parameter can be used, but it just concatenates that to the beginning of
-        # where it decides to install to, causing a more complicated path to where it installs.
-        wheels = {}
-        for name, package in ensurepip._get_packages().items():
-            if package.wheel_name:
-                whl = os.path.join(os.path.dirname(ensurepip.__file__), "_bundled", package.wheel_name)
-            else:
-                whl = package.wheel_path
-            wheels[name] = whl
-        pip_whl = os.path.join(wheels['pip'], 'pip')
-        subprocess.run([sys.executable, pip_whl, "install", *wheels.values(), "--upgrade", "--no-index", "--no-deps", "--no-cache-dir", "--target", absolute_path(".python_dependencies")], check=True)
-        return
-    
-    # STANDARD or USER_SITE
-    no_user = os.environ.get("PYTHONNOUSERSITE", None)
-    if method == PipInstall.STANDARD:
-        os.environ["PYTHONNOUSERSITE"] = "1"
+
+def _require_cuda_runtime():
+    return sys.platform == "win32" or os.environ.get("DREAM_TEXTURES_TEST_ALLOW_CPU") != "1"
+
+
+def session_runtime():
+    return installer.session_runtime(data_root(), require_cuda=_require_cuda_runtime())
+
+
+def current_runtime_status():
+    return installer.runtime_status(data_root(), session_runtime(), require_cuda=_require_cuda_runtime())
+
+
+def current_job_status():
+    if _JOB is not None:
+        value = installer._read_json(_JOB["status"])
+        return value or {"phase": "starting", "message": "Starting the runtime check." if _JOB["mode"] == "validate" else "Starting the private dependency installer."}
+    return _LAST_STATUS
+
+
+def job_running():
+    return _JOB is not None
+
+
+def _redraw():
+    manager = getattr(bpy.context, "window_manager", None)
+    for window in getattr(manager, "windows", ()):
+        for area in window.screen.areas:
+            area.tag_redraw()
+
+
+def _poll_job():
+    global _JOB, _LAST_STATUS
+    if _JOB is None:
+        return None
+    _redraw()
+    process = _JOB["process"]
+    if process.poll() is None:
+        return 0.4
+    _LAST_STATUS = installer._read_json(_JOB["status"])
+    if not _LAST_STATUS or _LAST_STATUS.get("phase") not in {"complete", "failed", "cancelled"}:
+        _LAST_STATUS = {
+            "phase": "failed",
+            "message": f"The installer stopped with exit code {process.returncode}. Open the installation log for details.",
+        }
+    _JOB["log_handle"].close()
+    _JOB = None
+    _redraw()
+    return None
+
+
+def _start_job(mode):
+    global _JOB, _LAST_STATUS, _LATEST_LOG
+    if job_running():
+        raise installer.InstallerError("A Dream Textures runtime operation is already running.")
+    if mode == "install" and not getattr(bpy.app, "online_access", True):
+        raise installer.InstallerError("Enable Allow Online Access in Blender Preferences, then install the dependencies.")
+    if mode == "install" and (sys.platform != "win32" or sys.version_info[:2] != (3, 13)):
+        raise installer.InstallerError("This build's installer requires Blender's Windows Python 3.13.")
+    instance = getattr(Generator, "_shared_instance", None)
+    if instance is not None and instance.is_alive() and not instance.can_use():
+        raise installer.InstallerError("Finish or cancel the current Dream Textures generation before changing its runtime.")
+    Generator.shared_close()
+    loaded = session_runtime()
+    if mode == "validate" and not current_runtime_status()["ready"]:
+        raise installer.InstallerError("Install the dependencies and restart Blender before checking the runtime.")
+    python = installer.blender_python_path()
+    root = data_root()
+    job_id = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S-") + uuid.uuid4().hex[:8]
+    (root / "logs").mkdir(parents=True, exist_ok=True)
+    (root / "jobs").mkdir(exist_ok=True)
+    log_path = root / "logs" / f"{mode}-{job_id}.log"
+    status_path = root / "jobs" / f"{mode}-{job_id}.json"
+    cancel_path = root / "jobs" / f"{mode}-{job_id}.cancel"
+    result_path = root / "jobs" / f"{mode}-{job_id}-result.json"
+    command = [str(python), "-I", "-S", absolute_path("compatibility_installer.py"), mode]
+    if mode == "install":
+        command += [
+            "--root", str(root),
+            "--requirements", absolute_path("requirements/compat-runtime.txt"),
+            "--torch-requirements", absolute_path("requirements/compat-torch-cuda128.txt"),
+            "--wheel-dir", absolute_path("wheels"),
+            "--cancel", str(cancel_path),
+        ]
     else:
-        os.environ.pop("PYTHONNOUSERSITE", None)
+        command += ["--runtime", str(loaded), "--result", str(result_path)]
+        if not _require_cuda_runtime():
+            command.append("--cpu-test-only")
+    command += ["--status", str(status_path)]
+    log_handle = log_path.open("w", encoding="utf-8", buffering=1)
+    log_handle.write("Dream Textures compatibility runtime\n")
+    log_handle.write(f"Blender: {bpy.app.version_string}\nPython: {python}\nRuntime data: {root}\nOperation: {mode}\n\n")
+    log_handle.flush()
+    options = {
+        "stdin": subprocess.DEVNULL, "stdout": log_handle, "stderr": subprocess.STDOUT,
+        "env": installer.sanitized_environment(),
+    }
+    if os.name == "nt":
+        options["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+    else:
+        options["start_new_session"] = True
     try:
-        ensurepip.bootstrap(user=method==PipInstall.USER_SITE)
-    finally:
-        os.environ.pop("PIP_REQ_TRACKER", None)
-        if no_user:
-            os.environ["PYTHONNOUSERSITE"] = no_user
-        else:
-            os.environ.pop("PYTHONNOUSERSITE", None)
+        process = subprocess.Popen(command, **options)
+    except BaseException:
+        log_handle.close()
+        raise
+    _LATEST_LOG = log_path
+    _LAST_STATUS = {}
+    _JOB = {"process": process, "log_handle": log_handle, "status": status_path, "cancel": cancel_path, "mode": mode}
+    bpy.app.timers.register(_poll_job, first_interval=0.2)
+    _redraw()
 
-def install_pip_any(*methods):
-    methods = methods or PipInstall
-    for method in methods:
-        print(f"Attempting to install pip: {PipInstall(method).name}")
+
+def shutdown_installer():
+    """Called when disabling/reloading the add-on; no abandoned pip process."""
+    global _JOB
+    if _JOB is not None:
+        _JOB["cancel"].write_text("cancel\n", encoding="utf-8")
+        process = _JOB["process"]
         try:
-            install_pip(method)
-            return method
-        except:
-            import traceback
-            traceback.print_exc()
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            installer.terminate_process_tree(process)
+        _JOB["log_handle"].close()
+        _JOB = None
+    with contextlib.suppress(ValueError, RuntimeError):
+        if bpy.app.timers.is_registered(_poll_job):
+            bpy.app.timers.unregister(_poll_job)
 
-def get_pip_install():
-    def run(pip):
-        if os.path.exists(pip):
-            try:
-                subprocess.run([sys.executable, pip, "--version"], check=True)
-                return True
-            except subprocess.CalledProcessError:
-                pass
-        return False
-
-    if run(absolute_path(".python_dependencies/pip")):
-        return PipInstall.DEPENDENCIES
-    
-    # This seems to not raise CalledProcessError while debugging in vscode, but works fine in normal use.
-    # subprocess.run([sys.executable, "-s", "-m", "pip", "--version"], check=True)
-    # Best to check if the module directory exists first.
-    for path in site.getsitepackages():
-        if run(os.path.join(path,"pip")):
-            return PipInstall.STANDARD
-
-    if run(os.path.join(site.getusersitepackages(),"pip")):
-        return PipInstall.USER_SITE
-
-
-def install_and_import_requirements(requirements_txt=None, pip_install=PipInstall.STANDARD):
-    """
-    Installs all modules in the 'requirements.txt' file.
-    """
-    environ_copy = dict(os.environ)
-    if pip_install != PipInstall.USER_SITE:
-        environ_copy["PYTHONNOUSERSITE"] = "1"
-    if pip_install == PipInstall.DEPENDENCIES:
-        environ_copy["PYTHONPATH"] = absolute_path(".python_dependencies")
-    python_include_dir = sysconfig.get_paths()['include']
-    if not os.path.exists(python_include_dir):
-        try:
-            os.makedirs(python_include_dir)
-        finally:
-            pass
-    if os.access(python_include_dir, os.W_OK):
-        print("downloading additional include files")
-        python_devel_tgz_path = absolute_path('python-devel.tgz')
-        response = requests.get(f"https://www.python.org/ftp/python/{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}/Python-{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}.tgz")
-        with open(python_devel_tgz_path, 'wb') as f:
-            f.write(response.content)
-        with tarfile.open(python_devel_tgz_path) as python_devel_tgz:
-            def members(tf):
-                prefix = f"Python-{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}/Include/"
-                l = len(prefix)
-                for member in tf.getmembers():
-                    if member.path.startswith(prefix):
-                        member.path = member.path[l:]
-                        yield member
-            python_devel_tgz.extractall(path=python_include_dir, members=members(python_devel_tgz))
-        os.remove(python_devel_tgz_path)
-    else:
-        print(f"skipping include files, can't write to {python_include_dir}",file=sys.stderr)
-
-    subprocess.run([sys.executable, "-m", "pip", "install", "-r", absolute_path(requirements_txt), "--upgrade", "--no-cache-dir", "--target", absolute_path('.python_dependencies')], check=True, env=environ_copy, cwd=absolute_path(""))
 
 class InstallDependencies(bpy.types.Operator):
     bl_idname = "stable_diffusion.install_dependencies"
-    bl_label = "Install Dependencies"
-    bl_description = ("Downloads and installs the required python packages into the '.python_dependencies' directory of the addon.")
-    bl_options = {"REGISTER", "INTERNAL"}
+    bl_label = "Install Compatible GPU Dependencies"
+    bl_description = "Install Dream Textures' private CUDA 12.8 runtime and check the GPU; restart Blender after completion"
+    bl_options = {'REGISTER', 'INTERNAL'}
 
-    def invoke(self, context, event):
-        return context.window_manager.invoke_confirm(self, event)
+    @classmethod
+    def poll(cls, context):
+        return not job_running()
 
     def execute(self, context):
-        # Open the console so we can watch the progress.
-        if sys.platform == 'win32':
-            bpy.ops.wm.console_toggle()
-
-        Generator.shared_close()
         try:
-            pip_install = get_pip_install()
-            if pip_install is None:
-                pip_install = install_pip_any()
-            if pip_install is None:
-                raise ImportError(f'Pip could not be installed. You may have to manually install pip into {absolute_path(".python_dependencies")}')
+            _start_job("install")
+        except (OSError, installer.InstallerError) as error:
+            self.report({'ERROR'}, str(error))
+            return {'CANCELLED'}
+        self.report({'INFO'}, "Dependency installation started. Progress and the log are available in Dream Textures preferences.")
+        return {'FINISHED'}
 
-            install_and_import_requirements(requirements_txt=context.scene.dream_textures_requirements_path, pip_install=pip_install)
-        except (subprocess.CalledProcessError, ImportError) as err:
-            self.report({"ERROR"}, str(err))
-            return {"CANCELLED"}
 
-        return {"FINISHED"}
+class CancelDependencyInstall(bpy.types.Operator):
+    bl_idname = "dream_textures.cancel_dependency_install"
+    bl_label = "Cancel"
+    bl_description = "Cancel this runtime operation and preserve the previous installation"
+    bl_options = {'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return job_running()
+
+    def execute(self, context):
+        if _JOB:
+            if _JOB["process"].poll() is not None:
+                _poll_job()
+                return {'FINISHED'}
+            _JOB["cancel"].write_text("cancel\n", encoding="utf-8")
+            if _JOB["mode"] == "validate":
+                installer.terminate_process_tree(_JOB["process"])
+                installer.atomic_json(_JOB["status"], {"phase": "cancelled", "message": "Runtime check cancelled."})
+            self.report({'INFO'}, "Cancellation requested.")
+        return {'FINISHED'}
+
+
+class VerifyRuntime(bpy.types.Operator):
+    bl_idname = "dream_textures.verify_runtime"
+    bl_label = "Check GPU Runtime"
+    bl_description = "Check package imports and small CUDA operations without downloading a model"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return not job_running() and current_runtime_status()["ready"]
+
+    def execute(self, context):
+        try:
+            _start_job("validate")
+        except (OSError, installer.InstallerError) as error:
+            self.report({'ERROR'}, str(error))
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
+class OpenRuntimeLog(bpy.types.Operator):
+    bl_idname = "dream_textures.open_runtime_log"
+    bl_label = "Open Installation Log"
+    bl_description = "Open the latest Dream Textures dependency installation or runtime check log"
+    bl_options = {'INTERNAL'}
+
+    def execute(self, context):
+        log = _LATEST_LOG
+        if log is None or not log.is_file():
+            logs = list((data_root() / "logs").glob("*.log"))
+            log = max(logs, key=lambda path: path.stat().st_mtime) if logs else None
+        if log is None:
+            self.report({'INFO'}, "No runtime installation log exists yet.")
+            return {'CANCELLED'}
+        if os.name == "nt":
+            os.startfile(str(log))
+        else:
+            bpy.ops.wm.path_open(filepath=str(log))
+        return {'FINISHED'}
+
+
+class RestorePreviousRuntime(bpy.types.Operator):
+    bl_idname = "dream_textures.restore_previous_runtime"
+    bl_label = "Restore Previous Runtime"
+    bl_description = "Select the previously validated private runtime; restart Blender to use it"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    @classmethod
+    def poll(cls, context):
+        return not job_running() and current_runtime_status()["previous"] is not None
+
+    def execute(self, context):
+        try:
+            installer.restore_previous_runtime(data_root())
+        except (OSError, installer.InstallerError) as error:
+            self.report({'ERROR'}, str(error))
+            return {'CANCELLED'}
+        self.report({'INFO'}, "Previous runtime selected. Restart Blender to use it.")
+        _redraw()
+        return {'FINISHED'}
+
 
 class UninstallDependencies(bpy.types.Operator):
+    """Keep the historical class name for registration; never touch global packages."""
     bl_idname = "stable_diffusion.uninstall_dependencies"
-    bl_label = "Uninstall Dependencies"
-    bl_description = ("Uninstalls specific dependencies from Blender's site-packages")
-    bl_options = {"REGISTER", "INTERNAL"}
+    bl_label = "Clean Incomplete Installations"
+    bl_description = "Remove abandoned Dream Textures staging folders; retain every completed runtime"
+    bl_options = {'REGISTER', 'INTERNAL'}
 
-    conflicts: bpy.props.StringProperty(name="Conflicts")
+    conflicts: bpy.props.StringProperty(options={'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        return not job_running()
 
     def execute(self, context):
-        # Open the console so we can watch the progress.
-        if sys.platform == 'win32':
-            bpy.ops.wm.console_toggle()
-
-        environ_copy = dict(os.environ)
-        environ_copy["PYTHONNOUSERSITE"] = "1"
-        subprocess.run([sys.executable, "-m", "pip", "uninstall", "-y", *self.conflicts.split(' ')], check=True, env=environ_copy, cwd=absolute_path(""))
-
-        return {"FINISHED"}
+        try:
+            root = data_root()
+            with installer.install_lock(root):
+                runtimes = root / "runtimes"
+                if runtimes.is_symlink():
+                    raise installer.InstallerError("The private runtime directory is a symbolic link; cleanup was skipped.")
+                for path in runtimes.glob("staging-*"):
+                    if path.is_dir() and not path.is_symlink():
+                        shutil.rmtree(path)
+        except (OSError, installer.InstallerError) as error:
+            self.report({'ERROR'}, str(error))
+            return {'CANCELLED'}
+        self.report({'INFO'}, "Incomplete installations removed. Completed runtimes and models were retained.")
+        return {'FINISHED'}

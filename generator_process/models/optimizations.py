@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Union, _AnnotatedAlias
+from typing import Annotated, Union, get_args, get_origin
 import functools
 import os
 import sys
@@ -50,8 +50,8 @@ class Optimizations:
     @classmethod
     def device_supports(cls, property, device) -> bool:
         annotation = cls.__annotations__.get(property, None)
-        if isinstance(annotation, _AnnotatedAlias):
-            opt_dev = annotation.__metadata__[0]
+        if get_origin(annotation) is Annotated:
+            opt_dev = get_args(annotation)[1]
             if isinstance(opt_dev, str):
                 return opt_dev == device
             return device in opt_dev
@@ -97,6 +97,12 @@ class Optimizations:
         try:
             if pipeline.device != pipeline._execution_device:
                 pass # pipeline is already offloaded, offloading again can cause `pipeline._execution_device` to be incorrect
+            elif device == "cuda" and self.cpu_offloading(device) == CPUOffload.MODEL:
+                # Let diffusers track and release all hooks, including the final
+                # VAE hook, when using its supported CUDA offload path.
+                pipeline.enable_model_cpu_offload(device=device)
+            elif device == "cuda" and self.cpu_offloading(device) == CPUOffload.SUBMODULE:
+                pipeline.enable_sequential_cpu_offload(device=device)
             elif self.cpu_offloading(device) == CPUOffload.MODEL:
                 # adapted from diffusers.StableDiffusionPipeline.enable_model_cpu_offload() to allow DirectML device and unimplemented pipelines
                 from accelerate import cpu_offload_with_hook

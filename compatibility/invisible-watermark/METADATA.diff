@@ -1,0 +1,19 @@
+--- original/METADATA
++++ dreamtextures1/METADATA
+@@ -1,6 +1,6 @@
+ Metadata-Version: 2.1
+ Name: invisible-watermark
+-Version: 0.2.0
++Version: 0.2.0+dreamtextures1
+ Summary: The library for creating and decoding invisible image watermarks
+ Home-page: https://github.com/ShieldMnt/invisible-watermark
+ Author: Qingquan Wang
+@@ -15,7 +15,7 @@
+ Requires-Dist: Pillow (>=6.0.0)
+ Requires-Dist: PyWavelets (>=1.1.1)
+ Requires-Dist: numpy (>=1.17.0)
+-Requires-Dist: opencv-python (>=4.1.0.25)
++Requires-Dist: opencv-python-headless (>=4.1.0.25)
+ Requires-Dist: torch
+ 
+ # invisible-watermark

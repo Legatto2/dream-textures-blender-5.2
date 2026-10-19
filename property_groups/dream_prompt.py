@@ -2,7 +2,6 @@ import bpy
 from bpy.props import FloatProperty, IntProperty, EnumProperty, BoolProperty, StringProperty, IntVectorProperty, CollectionProperty
 import os
 import sys
-from typing import _AnnotatedAlias
 
 from ..generator_process.actions.detect_seamless import SeamlessAxes
 from ..generator_process.actions.prompt_to_image import Optimizations, Scheduler, StepPreviewMode
@@ -82,7 +81,7 @@ def model_options(self, context):
 def _model_update(self, context):
     options = [m for m in model_options(self, context) if m is not None]
     if self.model == '' and len(options) > 0:
-        self.model = options[0]
+        self.model = options[0][0]
 
 def backend_options(self, context):
     return [

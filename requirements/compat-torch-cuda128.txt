@@ -1,0 +1,4 @@
+# Production lane: official PyTorch CUDA 12.8 wheels with sm_120 support.
+# The installer selects https://download.pytorch.org/whl/cu128 explicitly.
+torch==2.9.1+cu128
+torchvision==0.24.1+cu128

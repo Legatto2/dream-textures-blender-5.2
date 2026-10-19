@@ -140,17 +140,21 @@ class DownloadStatus:
             def progress(self):
                 nonlocal progresses
                 progresses.add(self)
-                ratio = self.n / self.total
+                # Hub downloads may construct a progress bar before the server
+                # provides a content length, or for an empty file.
+                ratio = self.n / self.total if self.total else 0
                 count = 0
                 for tqdm in progresses:
-                    r = tqdm.n / tqdm.total
+                    r = tqdm.n / tqdm.total if tqdm.total else 0
                     if r == 1:
                         continue
                     count += 1
                     if tqdm != self and ratio < r:
                         # only show download status of most complete file
                         return
-                future.add_response(cls(f"{count} file{'' if count == 1 else 's'}: {self.desc}", self.n, self.total))
+                total = self.total if self.total else max(self.n, 1)
+                description = getattr(self, "desc", None) or "Downloading"
+                future.add_response(cls(f"{count} file{'' if count == 1 else 's'}: {description}", self.n, total))
         file_download.tqdm = future_tqdm
 
 def hf_snapshot_download(
