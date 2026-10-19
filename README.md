@@ -1,14 +1,18 @@
 # Dream Textures — Blender 5.2 compatibility build
 
-**Build: 0.4.2-compat.1 · 19 October 2026**
+**Build: 0.4.2-compat.2 · 19 October 2026**
 
 An experimental community build for **Blender 5.2.2 LTS on Windows x64**, using Blender's **Python 3.13** and an **NVIDIA RTX 5060**. Based on Dream Textures 0.4.1, commit c2622a8a9f1ae6b790cfe1d2571f814b126811b4.
+
+Original project by **Carson Katri and the Dream Textures contributors**. Compatibility fork maintained by **Michael Heald ([Legatto2](https://github.com/Legatto2))**. See [attribution and licensing](ATTRIBUTION.md).
+
+This revision includes the attribution notice in the installation package and improves the accompanying credits. Runtime behavior and dependency pins are unchanged from **0.4.2-compat.1**; only documentation and package/build labels change.
 
 The ZIP contains the add-on's source, its reviewed small watermark wheel, documentation, and validation evidence. The GPU runtime and Stable Diffusion model download separately through Blender.
 
 ## Install in Blender
 
-1. Save **Dream-Textures-0.4.2-compat1-Blender52-Windows.zip** somewhere easy to find, such as Downloads. Keep it zipped for installation.
+1. Save **Dream-Textures-0.4.2-compat2-Blender52-Windows.zip** somewhere easy to find, such as Downloads. Keep it zipped for installation.
 2. Open **Blender 5.2.2 → Edit → Preferences → Add-ons**.
 3. Open the menu at the upper right and choose **Install from Disk…**. Select this ZIP, then install it. If an older Dream Textures copy is enabled, disable it before replacing it.
 4. Enable **Dream Textures (Blender 5.2 Compatibility)** and expand its settings.
@@ -44,7 +48,7 @@ A generated image in the Image Editor completes the first Windows/GPU smoke test
 
 ## What has been checked
 
-**47 automated tests passed**:
+**47 automated tests passed for the 0.4.2-compat.1 implementation**, retained in this revision:
 
 - 11 tests in the official Blender 5.2.2 application: registration/lifecycle, current node interfaces, image and render color handling, brush settings, presets, and handling of a backend error.
 - 14 offline backend tests using Blender's actual Python 3.13.13 and real tiny randomly initialized diffusion models: text/image generation, inpainting, depth, ControlNet, SDXL, upscaling, seamless generation, tiled decoding, previews, watermarking, and image conversion.
@@ -57,7 +61,9 @@ All 52 pinned packages resolve to compatible Windows Python 3.13 binary or pure-
 
 The detailed scope and logs are in **compatibility/BUILD_REPORT.md** and **compatibility/evidence/**.
 
-## Changes in this build
+For **0.4.2-compat.2**, verification covers the original archive and source hashes, unchanged runtime implementation and dependency pins, the new ZIP's CRCs and file manifest, and inclusion of the attribution/license notices. The original execution logs are preserved; the 47 application/runtime tests were not repeated for these documentation and build-label changes.
+
+## Runtime changes retained from 0.4.2-compat.1
 
 - Blender 5.2 node, brush, socket, render, lifecycle, and NumPy APIs.
 - A private, pinned Python 3.13 runtime with **PyTorch 2.9.1 / CUDA 12.8**, replacing reliance on the old bundled interpreter-specific libraries.
@@ -82,7 +88,7 @@ This add-on retains its module name **dream_textures** to preserve existing pref
 
 ## Source and license
 
-Dream Textures source is GPL-3.0-or-later; see **LICENSE**. The original project README is retained as **README.upstream.md**. This compatibility build's implementation and test source are included.
+Dream Textures source and original contributions to this compatibility fork are **GPL-3.0-or-later**; see [LICENSE](LICENSE). The [attribution notice](ATTRIBUTION.md) credits Carson Katri and the original contributors, identifies Michael Heald as compatibility maintainer, and records the modifications. The original project README is retained as [README.upstream.md](README.upstream.md). This compatibility build's implementation and test source are included.
 
 The bundled watermark wheel is MIT-licensed; its license and exact modification record are in **compatibility/invisible-watermark/**. See **THIRD_PARTY_NOTICES.md**.
 

@@ -2,6 +2,8 @@
 
 These commands are for development. Normal Windows setup uses the buttons described in the main README.
 
+The supplied execution logs describe the **0.4.2-compat.1** implementation. **0.4.2-compat.2** updates attribution, documentation, and build labels only; its package/source verification is described in [BUILD_REPORT.md](BUILD_REPORT.md). The original application/runtime test suite was not repeated for that revision.
+
 The tests were run with the official Blender 5.2.2 Linux distribution and its embedded Python 3.13.13. Set the following paths to an extracted copy of the source ZIP and an installed test Blender:
 
 ~~~bash

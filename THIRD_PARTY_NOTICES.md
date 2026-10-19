@@ -7,10 +7,14 @@ This compatibility build modifies Dream Textures 0.4.1:
 - Project: https://github.com/carson-katri/dream-textures
 - Source commit: c2622a8a9f1ae6b790cfe1d2571f814b126811b4
 - License: GNU General Public License, version 3 or any later version.
-- Copyright/attribution: original Dream Textures contributors and notices retained.
-- Compatibility changes prepared in this session, 19 October 2026.
+- Original project: Carson Katri and the Dream Textures contributors; original notices retained.
+- Compatibility maintainer: Michael Heald (Legatto2).
+- Compatibility implementation: 0.4.2-compat.1, 19 October 2026.
+- Attribution and packaging revision: 0.4.2-compat.2, 19 October 2026; runtime behavior and dependency pins unchanged.
 
-The complete modified add-on source is included in the installation ZIP. Existing-file changes are also summarized in **compatibility/upstream-changes.patch**; added source files are supplied directly.
+See [ATTRIBUTION.md](ATTRIBUTION.md) for the complete original-project and compatibility-fork credits. Original contributions made for this fork are offered under GPL-3.0-or-later, consistent with the upstream add-on; [LICENSE](LICENSE) is retained unchanged.
+
+The complete modified add-on source is included in the installation ZIP. The original 0.4.2-compat.1 implementation patch is retained as **compatibility/upstream-changes.patch**. The current source includes the subsequent 0.4.2-compat.2 attribution and packaging changes.
 
 ## Bundled invisible-watermark wheel
 

@@ -2,11 +2,23 @@
 
 ## Result and scope
 
-**Dream Textures 0.4.2-compat.1** was built on 19 October 2026 for **Blender 5.2.2 LTS / Windows x64 / Python 3.13 / RTX 5060**.
+**Dream Textures 0.4.2-compat.2** is an attribution and packaging revision prepared on 19 October 2026 for **Blender 5.2.2 LTS / Windows x64 / Python 3.13 / RTX 5060**. Its runtime implementation is retained from **0.4.2-compat.1**.
 
-The implementation passes **47 automated tests**, and the production dependency set resolves to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. A Windows GPU installation and a pretrained model generation are the remaining target-machine acceptance checks.
+The 0.4.2-compat.1 implementation passed **47 automated tests**, and its production dependency set resolved to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. Those test sources, logs, and dependency pins are preserved in this revision. A Windows GPU installation and a pretrained model generation are the remaining target-machine acceptance checks.
 
 The tests establish API/runtime compatibility. They do not establish pretrained output quality, performance, available VRAM in a particular scene, every ControlNet auxiliary checkpoint, all interactive painting/projection/viewport behavior, or compatibility with other operating systems.
+
+## Attribution and packaging revision
+
+Revision **0.4.2-compat.2** adds a root [ATTRIBUTION.md](../ATTRIBUTION.md) so the installation ZIP carries the explicit credits for **Carson Katri and the Dream Textures contributors**, and **Michael Heald (Legatto2)** as compatibility maintainer. The installation guide and third-party notices link to that canonical notice. The GitHub attribution page points to the same file.
+
+The original **0.4.2-compat.1** archive was recovered and verified against SHA-256 `2cb7f5701c420e1f9b3c8515380d419c489b7db985a148bb510d9c02a4f58bed` (**40,070,223 bytes**). All 179 ZIP entries passed CRC checks, and all 178 files recorded by its manifest matched their recorded sizes and SHA-256 hashes. Restoring the GitHub-only files produced a complete 185-file baseline matching commit `773501c6867f455e120ee9a134c216da6baeedee` by Git blob hash.
+
+Runtime source, dependency pins, the watermark wheel, and historical test evidence remain byte-identical to that baseline, with one metadata exception: `version.py` changes only `COMPATIBILITY_BUILD` from `0.4.2-compat.1` to `0.4.2-compat.2`. Blender's version tuple remains **0.4.2**. The packaging helper changes only its manifest build label.
+
+Revision validation checks the complete changed-file set, those byte comparisons, the build-label-only Python changes, root attribution/license inclusion and links, the regenerated file manifest, and the new archive's CRCs and single `dream_textures/` root. The 47 application/runtime tests were not rerun for these documentation and metadata changes. Their logs below describe the original implementation validation.
+
+The new installation asset is **Dream-Textures-0.4.2-compat2-Blender52-Windows.zip**. Its checksum and size are recorded in the repository's `.github/RELEASE_NOTES.md`; that repository metadata is excluded from the installation ZIP.
 
 ## Baseline and runtime
 
@@ -14,7 +26,8 @@ The tests establish API/runtime compatibility. They do not establish pretrained 
 |---|---|
 | Upstream add-on | Dream Textures 0.4.1 |
 | Upstream commit | c2622a8a9f1ae6b790cfe1d2571f814b126811b4 |
-| Compatibility build | 0.4.2-compat.1; Blender displays tuple version 0.4.2 |
+| Current package revision | 0.4.2-compat.2; Blender displays tuple version 0.4.2 |
+| Original implementation validation | 0.4.2-compat.1 |
 | Test application | Blender 5.2.2 LTS, d13f752e3b9c |
 | Embedded test interpreter | Python 3.13.13 |
 | Blender frontend NumPy | 2.3.4, retained from Blender |
@@ -37,7 +50,7 @@ Only opencv-python-headless supplies cv2. The small local invisible-watermark wh
 
 Unused historical OmegaConf, Lightning, and TensorBoard requirements were omitted after examining the conversion paths. PyYAML and safetensors remain. Arbitrary legacy pickled checkpoints may still need migration; the public default model uses FP16 safetensors.
 
-## Meaningful verification
+## Original implementation verification (0.4.2-compat.1)
 
 | Group | Result | Evidence |
 |---|---:|---|
@@ -58,7 +71,7 @@ Worker tests confirm that Blender keeps its own NumPy while its worker imports p
 
 Installer tests cover one isolated resolver command, interpreter discovery, environment sanitization, cancellation of owned child processes, activation after validation, rollback, previous-runtime retention, ABI/path checks, DLL search-directory handles, process-lifetime selection caching, and lock release.
 
-The packaging gate **passed** using Blender's actual add-on ZIP installer. It enabled the installed copy, confirmed version 0.4.2 and the Model offload default, and disabled it with clean RNA/Cycles restoration. See evidence/zip-install-smoke.log. Documentation and this log were included afterward; every production file is checked against the tested copy in evidence/tested-production-hashes.json.
+The original packaging gate **passed** using Blender's actual add-on ZIP installer. It enabled the installed copy, confirmed version 0.4.2 and the Model offload default, and disabled it with clean RNA/Cycles restoration. See evidence/zip-install-smoke.log. Documentation and this log were included afterward; the original production-file hashes remain in evidence/tested-production-hashes.json. In 0.4.2-compat.2, the `version.py` build-label metadata is the only runtime-source difference from those hashes; the Python runtime behavior is unchanged.
 
 ## Runtime boundary and lifecycle
 
@@ -89,4 +102,4 @@ The Blender UI now defaults CPU Offload to Model for the 8 GB target. That trade
 
 ## Included source and provenance
 
-The ZIP supplies all modified implementation files, existing-file patch, exact requirements, test source, build source, test logs, resolver report, model metadata evidence, wheel provenance, and license notices. Compiled Python caches and the old dependency placeholder are excluded.
+The ZIP supplies all current source files, the historical 0.4.2-compat.1 implementation patch, exact requirements, test source, build source, test logs, resolver report, model metadata evidence, wheel provenance, and license notices. Compiled Python caches and the old dependency placeholder are excluded.
