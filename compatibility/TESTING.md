@@ -15,22 +15,22 @@ DT_PROFILE=/absolute/path/to/disposable-dream-profile
 
 ## Current offline compatibility checks
 
-For **0.4.2-compat.3**, run the explicitly selected suites through [run_offline_tests.py](run_offline_tests.py). They use Python 3.10+ and NumPy, temporary checkpoint files, and simulated Blender/dependency/device boundaries. They do not run Blender, load a pretrained model, or install the production runtime. Each suite gets a separate interpreter so its module stubs cannot affect another suite.
+For **0.4.2-compat.3**, run the explicitly selected suites through [run_offline_tests.py](run_offline_tests.py). They use Python 3.11+ and NumPy, temporary checkpoint files, and simulated Blender/dependency/device boundaries. They do not run Blender, load a pretrained model, or install the production runtime. Each suite gets a separate interpreter so its module stubs cannot affect another suite.
 
 ~~~bash
 python3 -m pip install numpy==2.3.4
 python3 -B "$DT_SOURCE/compatibility/run_offline_tests.py"
 ~~~
 
-The NumPy pin matches the historical Blender frontend version and the new Python 3.13 CI lane. The local combined check passed **83 tests across seven suites**, using Linux Python 3.12.14 and NumPy 2.3.5. Its output is retained in [offline-backports-2026-10-20.log](evidence/offline-backports-2026-10-20.log).
+The NumPy pin matches the historical Blender frontend version and the new Python 3.13 CI lane. [NumPy 2.3.4 requires Python 3.11 or newer](https://pypi.org/project/numpy/2.3.4/). The local combined check passed **90 tests across seven suites**, using Linux Python 3.12.14 and NumPy 2.3.5. Its output is retained in [offline-backports-2026-10-20.log](evidence/offline-backports-2026-10-20.log).
 
 | Suite | Coverage |
 |---|---|
 | [Private installer](tests/test_installer.py) | Runtime isolation, activation, cancellation, rollback, and command invariants. |
 | [Offload lifecycle](tests/test_offload_lifecycle.py) | Repeated cached calls, hook ownership/cleanup, ControlNet replacement, and recommended-model preference UI. |
 | [Backend backports](tests/test_backend_backports.py) | Cancellation callback binding, supported non-empty ControlNet weight files and format/precision fallback, Hub symlinks, and DPT processor selection. |
-| [Projection inputs](tests/test_projection_inputs.py) | Finite masked depth, empty/flat captures, correct input/task/orientation, invoking viewport, owned diagnostics, and failure cleanup. |
-| [Model discovery](tests/test_model_discovery.py) | Bounded header validation and scanning, malformed files, supported/ambiguous architectures, identity/config precedence, catalog replacement, cancellation, and reload guards. |
+| [Projection inputs](tests/test_projection_inputs.py) | Finite masked depth, empty/flat captures, correct input/task/orientation, invoking viewport, owned diagnostics, failure cleanup, and constrained video/multilayer output-setting restoration. |
+| [Model discovery](tests/test_model_discovery.py) | Bounded header validation and scanning, malformed files, supported/ambiguous architectures, identity/config precedence, catalog replacement, capped refreshes, cancellation, and reload guards. |
 | [Model dispatch](tests/test_model_dispatch.py) | Local and Hub ControlNet resolution for all supported task branches and separate display labels/identifiers. |
 | [Model selection](tests/test_model_selection.py) | Full-identifier storage through menu reordering, removal, saved-state recreation, explicit-link aliases, and legacy numeric fallback. |
 

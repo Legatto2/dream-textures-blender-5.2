@@ -193,6 +193,7 @@ class ScannerTests(unittest.TestCase):
             write_model(self.root / f"m{index}.safetensors")
         result = scanner.scan_model_folders([str(self.root)], limits=replace(scanner.ScanLimits(), entries=1))
         self.assertTrue(result.limited)
+        self.assertTrue(result.linked_complete)
         self.assertLessEqual(len(result.models), 1)
         cancel = threading.Event()
         cancel.set()
@@ -270,8 +271,10 @@ def integration_namespace():
         'Checkpoint': lambda path, config: NS(path=path, config=config),
         '_preferences_generation': object(), '_model_scan_service': None,
         '_model_refresh_timer': None, '_model_refresh_token': None,
+        '_published_model_scan': scanner.ScanResult(), 'ScanResult': scanner.ScanResult,
         'current_runtime_status': lambda: {'ready': True},
         'model_identifier': scanner.model_identifier,
+        'reconcile_scan_result': scanner.reconcile_scan_result,
     })
     exec(compile(ast.Module(body=nodes, type_ignores=[]), 'preferences.py', 'exec'), ns)
     return ns
@@ -312,6 +315,16 @@ class PreferencesTests(unittest.TestCase):
                           take_result=lambda token: scanner.ScanResult())
         self.ns['ModelScanService'] = lambda: self.service
 
+    def refresh(self, scan, hub_models=()):
+        self.service.take_result = lambda token: scan
+        self.future.result = lambda: hub_models
+        self.ns['fetch_installed_models']()
+        self.ns['_model_refresh_timer']()
+
+    def hub_model(self, identifier):
+        return NS(id='/cache/models--' + identifier.replace('/', '--'), downloads=0, likes=0,
+                  model_type=self.ns['ModelType'].PROMPT_TO_IMAGE)
+
     def test_refresh_is_nonblocking_and_stale_timer_is_ignored(self):
         self.future.done = False
         self.ns['fetch_installed_models']()
@@ -327,6 +340,7 @@ class PreferencesTests(unittest.TestCase):
         self.assertFalse(self.pref.model_scan_running)
 
     def test_shutdown_invalidates_callbacks_before_reload(self):
+        self.ns['_published_model_scan'] = scanner.ScanResult(linked_settings=(('/old/link', 'config'),))
         self.ns['fetch_installed_models']()
         old = self.ns['_model_refresh_timer']
         self.ns['shutdown_model_discovery']()
@@ -335,6 +349,7 @@ class PreferencesTests(unittest.TestCase):
         self.assertIsNone(old())
         self.assertEqual(self.pref.model_scan_status, 'new generation')
         self.assertIsNone(self.ns['_model_scan_service'])
+        self.assertEqual(self.ns['_published_model_scan'], scanner.ScanResult())
 
     def test_catalog_keeps_explicit_ids_and_separates_folder_labels(self):
         scan = scanner.ScanResult(
@@ -368,22 +383,131 @@ class PreferencesTests(unittest.TestCase):
         self.assertEqual(checkpoint.config.name, 'STABLE_DIFFUSION_2_BASE')
         self.assertIs(models[prior_identifier], rows[0])
 
-    def test_failed_or_limited_refresh_preserves_existing_catalog(self):
-        old = self.pref.installed_models.add()
-        old.model = old.model_base = 'existing'
-        self.ns['checkpoint_lookup']._checkpoints = {'existing': 'keep'}
-        self.ns['model_lookup']._models = {'existing': 'keep'}
-        for limited in [False, True]:
-            with self.subTest(limited=limited):
-                bad = NS(id='fail-assignment', downloads=0, likes=0, model_type=self.ns['ModelType'].PROMPT_TO_IMAGE)
-                self.future.result = lambda: [bad]
-                self.service.take_result = lambda token: scanner.ScanResult(limited=limited)
+    def test_capped_startup_scan_publishes_downloads_conversions_and_complete_links(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            folders = root / 'folders'
+            write_model(folders / 'discovered.safetensors')
+            manual = root / 'manual.ckpt'
+            manual.write_bytes(b'not deserialized')
+            links = [(str(manual), 'STABLE_DIFFUSION_1')]
+            self.pref.model_folders = [NS(path=str(folders))]
+            self.pref.linked_checkpoints = [NS(path=path, model_config=config) for path, config in links]
+            scan = scanner.scan_model_folders([str(folders)], links,
+                                             limits=replace(scanner.ScanLimits(), entries=1))
+            self.assertTrue(scan.limited)
+            self.assertTrue(scan.linked_complete)
+            downloaded, converted = self.hub_model('owner/new-download'), self.hub_model('local/converted')
+            self.refresh(scan, [downloaded, converted])
+            self.assertEqual({row.model for row in self.pref.installed_models},
+                             {downloaded.id, converted.id, str(manual)})
+            self.assertIs(self.ns['model_lookup'].get('owner/new-download'), downloaded)
+            self.assertIs(self.ns['model_lookup'].get('local/converted'), converted)
+            self.assertEqual(self.ns['checkpoint_lookup'].get('manual.ckpt').config.name, 'STABLE_DIFFUSION_1')
+            self.assertIn('Hub models and checkpoint links refreshed', self.pref.model_scan_status)
+            self.assertNotIn('failed', self.pref.model_scan_status)
+
+    def test_capped_folder_refresh_keeps_registered_rows_and_honors_fresh_explicit_config(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            keep, removed = root / 'keep', root / 'removed'
+            chosen = write_model(keep / 'chosen.safetensors')
+            retained = write_model(keep / 'retained.safetensors')
+            forgotten = write_model(removed / 'forgotten.safetensors')
+            self.pref.model_folders = [NS(path=str(keep)), NS(path=str(removed))]
+            self.refresh(scanner.scan_model_folders([str(keep), str(removed)]), [self.hub_model('owner/old')])
+            identifiers = {row.path: row.identifier for row in self.ns['_published_model_scan'].models}
+            manual = root / 'new-link.ckpt'
+            manual.write_bytes(b'not deserialized')
+            links = [(str(chosen), 'STABLE_DIFFUSION_2_BASE'), (str(manual), 'STABLE_DIFFUSION_1')]
+            self.pref.model_folders = [NS(path=str(keep))]
+            self.pref.linked_checkpoints = [NS(path=path, model_config=config) for path, config in links]
+            scan = scanner.scan_model_folders([str(keep)], links,
+                                             limits=replace(scanner.ScanLimits(), entries=2))
+            self.assertTrue(scan.limited)
+            self.assertTrue(scan.linked_complete)
+            self.refresh(scan, [self.hub_model('owner/new')])
+            rows = [row.model for row in self.pref.installed_models]
+            self.assertIn(str(retained), rows)
+            self.assertNotIn(str(forgotten), rows)
+            self.assertEqual(rows.count(str(chosen)), 1)
+            self.assertIn(str(manual), rows)
+            self.assertIsNone(self.ns['model_lookup'].get('owner/old'))
+            self.assertIsNotNone(self.ns['model_lookup'].get('owner/new'))
+            checkpoints = self.ns['checkpoint_lookup']._checkpoints
+            self.assertEqual(checkpoints[identifiers[str(chosen)]].config.name, 'STABLE_DIFFUSION_2_BASE')
+            self.assertIs(checkpoints[identifiers[str(chosen)]], checkpoints['chosen.safetensors'])
+            self.assertNotIn(identifiers[str(forgotten)], checkpoints)
+
+    def test_capped_manual_stage_keeps_unchanged_complete_links_instead_of_partial_override(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            chosen = write_model(root / 'chosen.safetensors')
+            links = [(str(root), 'STABLE_DIFFUSION_1'), (str(chosen), 'STABLE_DIFFUSION_2_BASE')]
+            self.pref.linked_checkpoints = [NS(path=path, model_config=config) for path, config in links]
+            self.refresh(scanner.scan_model_folders([], links))
+            scan = scanner.scan_model_folders([], links, limits=replace(scanner.ScanLimits(), entries=2))
+            self.assertTrue(scan.limited)
+            self.assertFalse(scan.linked_complete)
+            self.assertEqual(scan.linked[0].config, 'STABLE_DIFFUSION_1')
+            self.refresh(scan, [self.hub_model('owner/new')])
+            self.assertIsNotNone(self.ns['model_lookup'].get('owner/new'))
+            self.assertEqual(self.ns['checkpoint_lookup'].get('chosen.safetensors').config.name,
+                             'STABLE_DIFFUSION_2_BASE')
+            self.assertIn('unchanged link settings', self.pref.model_scan_status)
+
+    def test_capped_manual_stage_does_not_restore_removed_links_or_changed_configs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            chosen = write_model(root / 'linked' / 'chosen.safetensors')
+            discovered = write_model(root / 'discovered' / 'model.safetensors')
+            links = [(str(chosen.parent), 'STABLE_DIFFUSION_1'), (str(chosen), 'STABLE_DIFFUSION_2_BASE')]
+            self.pref.model_folders = [NS(path=str(discovered.parent))]
+            original = scanner.scan_model_folders([str(discovered.parent)], links)
+            for changed in [links[:1], [links[0], (str(chosen), 'STABLE_DIFFUSION_2')]]:
+                with self.subTest(links=changed):
+                    self.refresh(original)
+                    self.pref.linked_checkpoints = [NS(path=path, model_config=config) for path, config in changed]
+                    scan = scanner.scan_model_folders([str(discovered.parent)], changed,
+                                                     limits=replace(scanner.ScanLimits(), entries=1))
+                    self.assertTrue(scan.limited)
+                    self.assertFalse(scan.linked_complete)
+                    fresh = self.hub_model('owner/new')
+                    self.refresh(scan, [fresh])
+                    self.assertEqual([row.model for row in self.pref.installed_models], [fresh.id])
+                    self.assertEqual(self.ns['checkpoint_lookup']._checkpoints, {})
+                    self.assertIn('Local models need a complete checkpoint-link scan', self.pref.model_scan_status)
+
+    def test_failed_cancelled_or_unpublished_refresh_preserves_catalog_and_snapshot(self):
+        previous = scanner.ScanResult(linked=(scanner.LinkedCheckpoint('/models/keep.ckpt', 'STABLE_DIFFUSION_1',
+                                                                      '/models/keep.ckpt'),))
+        self.refresh(previous, [self.hub_model('owner/keep')])
+        rows = [vars(row).copy() for row in self.pref.installed_models]
+        checkpoints, models = self.ns['checkpoint_lookup']._checkpoints, self.ns['model_lookup']._models
+        for failure in ['scanner', 'cancelled', 'hub', 'assignment', 'cancel-refresh']:
+            with self.subTest(failure=failure):
+                scan = scanner.ScanResult(error='scan failure') if failure == 'scanner' else scanner.ScanResult(
+                    cancelled=failure == 'cancelled', limited=failure == 'assignment')
+                self.service.take_result = lambda token: scan
+                self.future.result = lambda: [self.hub_model('owner/new')]
+                if failure == 'hub':
+                    def fail():
+                        raise RuntimeError('hub failure')
+                    self.future.result = fail
+                elif failure == 'assignment':
+                    self.future.result = lambda: [NS(id='fail-assignment', downloads=0, likes=0,
+                                                    model_type=self.ns['ModelType'].PROMPT_TO_IMAGE)]
                 self.ns['fetch_installed_models']()
-                self.ns['_model_refresh_timer']()
-                self.assertEqual([item.model for item in self.pref.installed_models], ['existing'])
-                self.assertEqual(self.ns['checkpoint_lookup']._checkpoints, {'existing': 'keep'})
-                self.assertEqual(self.ns['model_lookup']._models, {'existing': 'keep'})
-                self.assertIn('failed', self.pref.model_scan_status)
+                poll = self.ns['_model_refresh_timer']
+                if failure == 'cancel-refresh':
+                    self.ns['_cancel_model_refresh']()
+                poll()
+                self.assertEqual([vars(row) for row in self.pref.installed_models], rows)
+                self.assertIs(self.ns['checkpoint_lookup']._checkpoints, checkpoints)
+                self.assertIs(self.ns['model_lookup']._models, models)
+                self.assertIs(self.ns['_published_model_scan'], previous)
+                if failure != 'cancel-refresh':
+                    self.assertIn('failed', self.pref.model_scan_status)
 
 
 if __name__ == '__main__':

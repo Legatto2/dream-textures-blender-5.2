@@ -25,7 +25,7 @@ test_unvalidated_runtime_cannot_replace_working_runtime (__main__.InstallerTests
 test_windows_abi3_and_torch_dll_directories_keep_live_handles (__main__.InstallerTests.test_windows_abi3_and_torch_dll_directories_keep_live_handles) ... ok
 
 ----------------------------------------------------------------------
-Ran 16 tests in 1.071s
+Ran 16 tests in 0.923s
 
 OK
 
@@ -40,7 +40,7 @@ test_task_conversion_keeps_shared_weights_with_current_hook_ownership (__main__.
 test_incompatible_model_download_uses_current_half_precision_preference (__main__.ValidationUITests.test_incompatible_model_download_uses_current_half_precision_preference) ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 0.153s
+Ran 8 tests in 0.077s
 
 OK
 Behavioral simulation against /workspace/scratch/405d34467702/dream-textures-repo; no real CUDA or Blender execution.
@@ -56,7 +56,7 @@ test_actor_callback_override_remains_an_instance_function (__main__.FutureTests.
 test_default_cancellation_callback_is_callable (__main__.FutureTests.test_default_cancellation_callback_is_callable) ... ok
 
 ----------------------------------------------------------------------
-Ran 8 tests in 0.172s
+Ran 8 tests in 0.065s
 
 OK
 Backend backport checks against /workspace/scratch/405d34467702/dream-textures-repo; no real CUDA or Blender execution.
@@ -77,19 +77,26 @@ test_owned_diagnostics_do_not_overwrite_an_unrelated_name_collision (__main__.Pr
 test_render_failure_restores_settings_and_removes_temporary_directory (__main__.ProjectionCaptureTests.test_render_failure_restores_settings_and_removes_temporary_directory) ... ok
 test_view_uses_invoking_area_not_another_viewport (__main__.ProjectionCaptureTests.test_view_uses_invoking_area_not_another_viewport) ... ok
 test_capture_exception_restores_resolution_format_border_and_overlays (__main__.RenderSettingsTests.test_capture_exception_restores_resolution_format_border_and_overlays) ... ok
+test_capture_failure_restores_video_and_multilayer_coerced_options (__main__.RenderSettingsTests.test_capture_failure_restores_video_and_multilayer_coerced_options) ... ok
 test_invalid_size_does_not_change_settings (__main__.RenderSettingsTests.test_invalid_size_does_not_change_settings) ... ok
+test_png_setup_failure_restores_after_media_type_already_coerced_options (__main__.RenderSettingsTests.test_png_setup_failure_restores_after_media_type_already_coerced_options) ... ok
 test_restore_continues_after_one_setting_raises (__main__.RenderSettingsTests.test_restore_continues_after_one_setting_raises) ... ok
+test_video_and_multilayer_capture_restore_constrained_output_settings (__main__.RenderSettingsTests.test_video_and_multilayer_capture_restore_constrained_output_settings) ... ok
 
 ----------------------------------------------------------------------
-Ran 17 tests in 0.151s
+Ran 20 tests in 0.108s
 
 OK
 Projection input checks: NumPy + simulated Blender/GPU; no live rendering or CUDA inference.
 
 Running test_model_discovery.py
+test_capped_folder_refresh_keeps_registered_rows_and_honors_fresh_explicit_config (__main__.PreferencesTests.test_capped_folder_refresh_keeps_registered_rows_and_honors_fresh_explicit_config) ... ok
+test_capped_manual_stage_does_not_restore_removed_links_or_changed_configs (__main__.PreferencesTests.test_capped_manual_stage_does_not_restore_removed_links_or_changed_configs) ... ok
+test_capped_manual_stage_keeps_unchanged_complete_links_instead_of_partial_override (__main__.PreferencesTests.test_capped_manual_stage_keeps_unchanged_complete_links_instead_of_partial_override) ... ok
+test_capped_startup_scan_publishes_downloads_conversions_and_complete_links (__main__.PreferencesTests.test_capped_startup_scan_publishes_downloads_conversions_and_complete_links) ... ok
 test_catalog_keeps_explicit_ids_and_separates_folder_labels (__main__.PreferencesTests.test_catalog_keeps_explicit_ids_and_separates_folder_labels) ... ok
 test_explicit_link_preserves_prior_folder_selection_without_duplicate_row (__main__.PreferencesTests.test_explicit_link_preserves_prior_folder_selection_without_duplicate_row) ... ok
-test_failed_or_limited_refresh_preserves_existing_catalog (__main__.PreferencesTests.test_failed_or_limited_refresh_preserves_existing_catalog) ... ok
+test_failed_cancelled_or_unpublished_refresh_preserves_catalog_and_snapshot (__main__.PreferencesTests.test_failed_cancelled_or_unpublished_refresh_preserves_catalog_and_snapshot) ... ok
 test_refresh_is_nonblocking_and_stale_timer_is_ignored (__main__.PreferencesTests.test_refresh_is_nonblocking_and_stale_timer_is_ignored) ... ok
 test_shutdown_invalidates_callbacks_before_reload (__main__.PreferencesTests.test_shutdown_invalidates_callbacks_before_reload) ... ok
 test_cached_headers_are_not_reread_and_deletions_disappear (__main__.ScannerTests.test_cached_headers_are_not_reread_and_deletions_disappear) ... ok
@@ -104,7 +111,7 @@ test_truncation_oversized_headers_and_overlapping_tensors_are_skipped (__main__.
 test_stale_jobs_and_cancelled_jobs_cannot_publish (__main__.WorkerTests.test_stale_jobs_and_cancelled_jobs_cannot_publish) ... ok
 
 ----------------------------------------------------------------------
-Ran 15 tests in 0.084s
+Ran 19 tests in 0.112s
 
 OK
 
@@ -116,7 +123,7 @@ test_refiner_enum_callbacks_preserve_selection_through_reorder_and_link (__main_
 test_selector_labels_are_independent_from_stable_ids (__main__.DispatchTests.test_selector_labels_are_independent_from_stable_ids) ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 0.079s
+Ran 5 tests in 0.048s
 
 OK
 
@@ -137,7 +144,7 @@ test_registry_never_reuses_removed_values_or_truncates_identifiers (__main__.Sel
 test_serialized_full_string_works_without_any_stored_numeric_value (__main__.SelectionTests.test_serialized_full_string_works_without_any_stored_numeric_value) ... ok
 
 ----------------------------------------------------------------------
-Ran 14 tests in 0.023s
+Ran 14 tests in 0.026s
 
 OK
 

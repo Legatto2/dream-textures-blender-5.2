@@ -60,6 +60,8 @@ class ScanResult:
     limited: bool = False
     cancelled: bool = False
     error: str = ""
+    linked_complete: bool = True
+    linked_settings: tuple = ()
 
 
 def normalize_path(path, path_module=os.path):
@@ -75,6 +77,27 @@ def canonical_path(path):
 def model_identifier(identity):
     # Labels, root order, and characters such as '--' never determine identity.
     return "local:" + sha256(os.fsencode(identity)).hexdigest()
+
+
+def reconcile_scan_result(scan, previous, folders):
+    """Retain complete local results when a capped scan refreshes the Hub list.
+
+    The manual-link stage shares the scan budget. Its partial prefix cannot
+    replace a complete snapshot, and a snapshot with different link settings
+    could restore a removed link or override a newly selected configuration.
+    """
+    if not scan.limited:
+        return scan
+
+    def settings_key(settings):
+        return tuple((normalize_path(os.path.abspath(path)), config) for path, config in settings)
+
+    if not scan.linked_complete and settings_key(scan.linked_settings) != settings_key(previous.linked_settings):
+        return replace(scan, models=(), linked=())
+    roots = {normalize_path(os.path.abspath(path)) for path in folders}
+    models = tuple(model for model in previous.models if normalize_path(model.root) in roots)
+    linked = scan.linked if scan.linked_complete else previous.linked
+    return replace(scan, models=models, linked=linked)
 
 
 class _Stopped(Exception):
@@ -258,6 +281,8 @@ def scan_model_folders(folders, linked_checkpoints=(), *, limits=None, cancel=No
     uses a single daemon worker and never joins it from Blender's UI thread.
     """
     budget = _Budget(limits or ScanLimits(), cancel or threading.Event())
+    linked_checkpoints = tuple(linked_checkpoints)
+    linked_complete = False
     cache = {} if cache is None else cache
     models, linked = [], {}
     seen_files, seen_roots, seen_dirs = set(), set(), set()
@@ -281,6 +306,7 @@ def scan_model_folders(folders, linked_checkpoints=(), *, limits=None, cancel=No
             except OSError:
                 errors += 1
 
+        linked_complete = True
         linked_paths = {item.identity for item in linked.values()}
         for raw_root in folders:
             budget.check()
@@ -353,7 +379,11 @@ def scan_model_folders(folders, linked_checkpoints=(), *, limits=None, cancel=No
     for key in list(cache):
         if key not in seen_files:
             del cache[key]
-    return ScanResult(tuple(models), tuple(linked.values()), skipped, errors, budget.limited, budget.cancel.is_set())
+    return ScanResult(
+        models=tuple(models), linked=tuple(linked.values()), skipped=skipped, errors=errors,
+        limited=budget.limited, cancelled=budget.cancel.is_set(),
+        linked_complete=linked_complete, linked_settings=linked_checkpoints,
+    )
 
 
 @dataclass

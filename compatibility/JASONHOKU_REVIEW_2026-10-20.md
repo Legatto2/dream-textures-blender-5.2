@@ -25,6 +25,14 @@ The review also includes Jason's later `main` snapshot [`50d53f0724f94f1c8449ed7
 | Depth and Color | Explicitly select the corresponding image task and use consistent top-to-bottom image orientation. |
 | Packaging and checks | Use official actions pinned to commits for focused tests and source-package validation. Keep the private runtime installer rather than bundling multi-gigabyte GPU dependencies. |
 
+## Follow-up review fixes
+
+[PR #2](https://github.com/Legatto2/dream-textures-blender-5.2/pull/2) also addresses the review of these adaptations:
+
+- The combined offline runner requires Python 3.11 or newer, matching [NumPy 2.3.4's declared minimum](https://pypi.org/project/numpy/2.3.4/). The separate standard-library offload suite can still run on Python 3.10.
+- A capped folder scan can publish refreshed Hub models and completed manual-link results while retaining previous discoveries for roots that remain registered. Fresh explicit checkpoint configurations take priority over retained folder rows. Manual links share the scan budget: if that earlier stage is incomplete, previous local results are retained only when the ordered link paths/configurations are unchanged. Changed links leave local entries unavailable until a complete scan instead of restoring an obsolete override. Hard failures and cancellation keep the prior catalog; shutdown clears the retained snapshot.
+- Temporary color capture saves `media_type` and switches it to `IMAGE` before choosing PNG. Restoration puts the original media type and file format back before their dependent color mode, depth, multiview format, and output color space. This follows the [Blender 5.2.2 format enum constraints](https://github.com/blender/blender/blob/v5.2.2/source/blender/makesrna/intern/rna_scene.cc) and [format-setter coercions](https://github.com/blender/blender/blob/v5.2.2/source/blender/blenkernel/intern/image_format.cc). Constrained offline fixtures cover valid video and multilayer output on success, setup failure, and capture failure. Blender's own normalization of invalid/legacy movie codec settings remains outside that fixture's scope.
+
 ## Changes retained from our fork
 
 The worker already has private-runtime selection, interpreter/environment isolation, serialized spawning, dead-worker detection, one-shot nonblocking cancellation transport, and recovery after failed responses. Replacing it with Jason's worker would discard those protections.

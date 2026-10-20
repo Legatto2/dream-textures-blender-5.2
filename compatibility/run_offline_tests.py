@@ -1,6 +1,6 @@
 """Run the focused compatibility suites without Blender or model downloads.
 
-Python 3.10+ and NumPy are required. Each suite runs in its own interpreter so
+Python 3.11+ and NumPy are required. Each suite runs in its own interpreter so
 the simulated dependency modules used by one suite cannot affect another.
 The Blender/real-runtime suites in tests/ are intentionally separate.
 """

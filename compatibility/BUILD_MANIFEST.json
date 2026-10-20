@@ -11,8 +11,8 @@
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     "README.md": {
-      "bytes": 14926,
-      "sha256": "f9c2a79f28d6443dbbf05fc9cbffd34dda8bf4413ab329227d1d714ae9cf2b21"
+      "bytes": 15074,
+      "sha256": "bd7f3152c449ef34a29157df72c46b001a88001430131dd8123170df705bfc50"
     },
     "README.upstream.md": {
       "bytes": 5318,
@@ -103,20 +103,20 @@
       "sha256": "ab3b03ec2bdfbb2417cf32318a96169021a8ce95d071fd5b3eed16ca9536860f"
     },
     "compatibility/BUILD_REPORT.md": {
-      "bytes": 13897,
-      "sha256": "cdd26b97d05768da6649ce226c4fcb087039b1853ba2cf39a17bc05bede09796"
+      "bytes": 13978,
+      "sha256": "b71aca8bafb8105e0d055cc00fca5c38d3d0d06ec0e47523bb0c5df4b0d52ea8"
     },
     "compatibility/JASONHOKU_REVIEW_2026-10-20.md": {
-      "bytes": 7731,
-      "sha256": "711d5926393bc949052ce64020afd4097bea0538ea9fcd1b73a5e22746d97142"
+      "bytes": 9454,
+      "sha256": "9802c018007b07ee8bb4e785b3b133228236e2fcdf1ed8f215d40bd0712d34f5"
     },
     "compatibility/TESTING.md": {
-      "bytes": 8662,
-      "sha256": "a86a38d065892dfd08ff1d20f301fe65036e0394ae3edb69af98a1a552187340"
+      "bytes": 8821,
+      "sha256": "15b1d18483bfe3f5f5da37b435fa84c0436fd0b4bd856cea77923784ac0d491b"
     },
     "compatibility/VALIDATION_2026-10-20.md": {
       "bytes": 9617,
-      "sha256": "ae16f228a726701136ed82b95538fa225c874d481331da4fa2227b20fa98d8af"
+      "sha256": "54b868b894d07c7676227be3ffbdc0b942126dc1b8f456a8558bc20a3b14d966"
     },
     "compatibility/build_zip.py": {
       "bytes": 2872,
@@ -167,8 +167,8 @@
       "sha256": "32b06f56f1efab7d80faa3039a1b6da682e6776b4e3c8ff2f35af1b42077a247"
     },
     "compatibility/evidence/offline-backports-2026-10-20.log": {
-      "bytes": 14548,
-      "sha256": "f1de2c29f018ef9b2bd3ae3830cf2f1238077cd97ca13822f12ebab609a03541"
+      "bytes": 15892,
+      "sha256": "53a244b83f13a9d11ec17f8a59ecceb42720dc00d649036450a9f869930bce1d"
     },
     "compatibility/evidence/offload-lifecycle-2026-10-20.log": {
       "bytes": 1655,
@@ -204,7 +204,7 @@
     },
     "compatibility/run_offline_tests.py": {
       "bytes": 1125,
-      "sha256": "58ebe5148a1eb97c9f3157323a76895800c1300d553c6aaa77a74f57632721fd"
+      "sha256": "e0d3ceaf88439fe8ab7c1874d6e964f7b63a4a44944f6bf2f969ac6eb625019a"
     },
     "compatibility/tests/actor_probes.py": {
       "bytes": 1041,
@@ -235,8 +235,8 @@
       "sha256": "e96eb335ceea99a3745e6af34aa99de70592c8321e0e056d1cb06b1553c5d979"
     },
     "compatibility/tests/test_model_discovery.py": {
-      "bytes": 19342,
-      "sha256": "a19a294b0c20601e3820f24e1dd99a3429c351a7f9fbe04e3995e3ff86b10b74"
+      "bytes": 27737,
+      "sha256": "a84677bdafb4d5e6f86d8e4ffb4661e5c0381c866b98f75cf0d99a9667ce937d"
     },
     "compatibility/tests/test_model_dispatch.py": {
       "bytes": 8515,
@@ -251,8 +251,8 @@
       "sha256": "401e076621f72c309c445ee51c61abd1390816e5d5d494128d8f3816a50a2919"
     },
     "compatibility/tests/test_projection_inputs.py": {
-      "bytes": 20663,
-      "sha256": "5fd4b90e7e9d9e4d29f938a93bb7ce6fd1d91120b8bd859978c1f5257b82f90a"
+      "bytes": 27466,
+      "sha256": "2c36f806c15fca0d4f0fd423bf5f754a7f6e8132bd89ba6d0484f6d700a01b7f"
     },
     "compatibility/tests/test_zip_install.py": {
       "bytes": 2632,
@@ -607,8 +607,8 @@
       "sha256": "68407519da91ef835fe61f3120eec2781e9a59cc8956aeff8352d4a66b9dda20"
     },
     "model_scanner.py": {
-      "bytes": 17572,
-      "sha256": "7fbcb33724bf2a06710d469f47da665a1ad2d87b933c020ccdd36740466647e2"
+      "bytes": 18901,
+      "sha256": "a68ef2f1779e88fa83141a3a35e2bab69c78841dcced3536440706759dd2e9c7"
     },
     "model_selection.py": {
       "bytes": 5494,
@@ -647,12 +647,12 @@
       "sha256": "bdc3b19524d4afd971fbec775b7d3944959bce9584ace06ac640439281193666"
     },
     "preferences.py": {
-      "bytes": 32134,
-      "sha256": "8f081ba987977086e9c6562bdf728455d5d80f974a150978ac585ab089e84fbf"
+      "bytes": 33437,
+      "sha256": "e45fb810a1f66d0dda47255a9af72d26c09faebe2ab85416594e2bb23c5b46f6"
     },
     "projection_utils.py": {
-      "bytes": 4748,
-      "sha256": "a59d5ca9032ebbf5bdeefb7ddd00b01f8a4351c45a5da7fb00dd5373f6e01424"
+      "bytes": 5266,
+      "sha256": "f902d3157cb6084f1aef8cf4e0e4904390ae6d2fe79b5cab681ee6c8e7a4aaf1"
     },
     "prompt_engineering.py": {
       "bytes": 4166,

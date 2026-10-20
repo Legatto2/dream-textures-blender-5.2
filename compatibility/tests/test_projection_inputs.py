@@ -86,7 +86,112 @@ def settings_snapshot(context, space):
             render.filepath, render.image_settings.file_format,
             render.image_settings.color_mode, render.image_settings.color_depth,
             render.use_border, render.use_crop_to_border,
-            space.overlay.show_overlays, space.show_gizmo)
+            space.overlay.show_overlays, space.show_gizmo,
+            getattr(render.image_settings, "media_type", None),
+            getattr(render.image_settings, "views_format", None),
+            getattr(getattr(render.image_settings, "linear_colorspace_settings", None), "name", None))
+
+
+class ConstrainedImageSettings:
+    """Simulate the relevant Blender 5.2 format enums and setter coercions.
+
+    Based on rna_scene.cc and blenkernel/intern/image_format.cc at v5.2.2.
+    Video represents an RGB/8-bit codec; codec-specific settings are not modeled.
+    """
+    _formats = {
+        "IMAGE": ("PNG", "OPEN_EXR"),
+        "VIDEO": ("FFMPEG",),
+        "MULTI_LAYER_IMAGE": ("OPEN_EXR_MULTILAYER",),
+    }
+    _depths = {
+        "PNG": ("8", "16"), "OPEN_EXR": ("16", "32"),
+        "FFMPEG": ("8",), "OPEN_EXR_MULTILAYER": ("16", "32"),
+    }
+    _views = {
+        "PNG": ("INDIVIDUAL", "STEREO_3D"),
+        "FFMPEG": ("INDIVIDUAL", "STEREO_3D"),
+        "OPEN_EXR": ("INDIVIDUAL", "STEREO_3D", "MULTIVIEW"),
+        "OPEN_EXR_MULTILAYER": ("INDIVIDUAL", "MULTIVIEW"),
+    }
+
+    def __init__(self, media_type):
+        self._media_type = media_type
+        self._file_format = self._formats[media_type][0]
+        video = media_type == "VIDEO"
+        self._color_mode = "RGB" if video else "RGBA"
+        self._color_depth = "8" if video else "32"
+        self._views_format = "STEREO_3D" if video else "MULTIVIEW"
+        self.linear_colorspace_settings = NS(name="Display P3" if video else "ACEScg")
+        self.fail_explicit_png = False
+
+    @property
+    def media_type(self):
+        return self._media_type
+
+    @media_type.setter
+    def media_type(self, value):
+        if value not in self._formats:
+            raise ValueError("unsupported media_type")
+        self._media_type = value
+        if self._file_format not in self._formats[value]:
+            self._apply_format(self._formats[value][0])
+
+    @property
+    def file_format(self):
+        return self._file_format
+
+    @file_format.setter
+    def file_format(self, value):
+        if value not in self._formats[self._media_type]:
+            raise ValueError(f"{value} is unavailable for media_type {self._media_type}")
+        if value == "PNG" and self.fail_explicit_png:
+            raise RuntimeError("explicit PNG assignment failed")
+        self._apply_format(value)
+
+    def _apply_format(self, value):
+        self._file_format = value
+        if value == "FFMPEG" and self._color_mode == "RGBA":
+            self._color_mode = "RGB"
+        if self._color_depth not in self._depths[value]:
+            self._color_depth = self._depths[value][-1]
+        if value == "OPEN_EXR_MULTILAYER" and self._views_format == "STEREO_3D":
+            self._views_format = "MULTIVIEW"
+        elif value not in {"OPEN_EXR", "OPEN_EXR_MULTILAYER"} and self._views_format == "MULTIVIEW":
+            self._views_format = "INDIVIDUAL"
+        color_space = self.linear_colorspace_settings.name
+        requires_linear = value in {"OPEN_EXR", "OPEN_EXR_MULTILAYER"}
+        if color_space != "Non-Color" and (not color_space or requires_linear != (color_space == "Linear Rec.709")):
+            self.linear_colorspace_settings.name = "Linear Rec.709" if requires_linear else "sRGB"
+
+    @property
+    def color_mode(self):
+        return self._color_mode
+
+    @color_mode.setter
+    def color_mode(self, value):
+        if value not in {"BW", "RGB", "RGBA"} or (value == "RGBA" and self._file_format == "FFMPEG"):
+            raise ValueError("unsupported color_mode for this format/codec")
+        self._color_mode = value
+
+    @property
+    def color_depth(self):
+        return self._color_depth
+
+    @color_depth.setter
+    def color_depth(self, value):
+        if value not in self._depths[self._file_format]:
+            raise ValueError("unsupported color_depth for this format/codec")
+        self._color_depth = value
+
+    @property
+    def views_format(self):
+        return self._views_format
+
+    @views_format.setter
+    def views_format(self, value):
+        if value not in self._views[self._file_format]:
+            raise ValueError("unsupported views_format for this format")
+        self._views_format = value
 
 
 class DepthNormalizationTests(unittest.TestCase):
@@ -122,6 +227,44 @@ class DepthNormalizationTests(unittest.TestCase):
 
 
 class RenderSettingsTests(unittest.TestCase):
+    def test_video_and_multilayer_capture_restore_constrained_output_settings(self):
+        for media_type in ("VIDEO", "MULTI_LAYER_IMAGE"):
+            with self.subTest(media_type=media_type):
+                context, _, space, _ = context_fixture()
+                settings = context.scene.render.image_settings = ConstrainedImageSettings(media_type)
+                before = settings_snapshot(context, space)
+                with helpers.temporary_render_settings(context.scene.render, space, (640, 384), "capture.png"):
+                    self.assertEqual((settings.media_type, settings.file_format, settings.color_mode),
+                                     ("IMAGE", "PNG", "RGBA"))
+                    if media_type == "MULTI_LAYER_IMAGE":
+                        self.assertEqual(settings.color_depth, "16")
+                        self.assertEqual(settings.views_format, "INDIVIDUAL")
+                self.assertEqual(settings_snapshot(context, space), before)
+
+    def test_capture_failure_restores_video_and_multilayer_coerced_options(self):
+        for media_type in ("VIDEO", "MULTI_LAYER_IMAGE"):
+            with self.subTest(media_type=media_type):
+                context, _, space, _ = context_fixture()
+                settings = context.scene.render.image_settings = ConstrainedImageSettings(media_type)
+                before = settings_snapshot(context, space)
+                with self.assertRaisesRegex(RuntimeError, "capture failed"):
+                    with helpers.temporary_render_settings(context.scene.render, space, (512, 512), "capture.png"):
+                        self.assertEqual((settings.media_type, settings.file_format), ("IMAGE", "PNG"))
+                        raise RuntimeError("capture failed")
+                self.assertEqual(settings_snapshot(context, space), before)
+
+    def test_png_setup_failure_restores_after_media_type_already_coerced_options(self):
+        for media_type in ("VIDEO", "MULTI_LAYER_IMAGE"):
+            with self.subTest(media_type=media_type):
+                context, _, space, _ = context_fixture()
+                settings = context.scene.render.image_settings = ConstrainedImageSettings(media_type)
+                settings.fail_explicit_png = True
+                before = settings_snapshot(context, space)
+                with self.assertRaisesRegex(RuntimeError, "explicit PNG assignment failed"):
+                    with helpers.temporary_render_settings(context.scene.render, space, (512, 512), "capture.png"):
+                        self.fail("capture cannot start after setup failure")
+                self.assertEqual(settings_snapshot(context, space), before)
+
     def test_capture_exception_restores_resolution_format_border_and_overlays(self):
         context, _, space, _ = context_fixture()
         context.scene.render.image_settings.file_format = "PNG"

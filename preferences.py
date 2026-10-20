@@ -15,7 +15,7 @@ from .ui.presets import RestoreDefaultPresets, default_presets_missing
 from .generator_process import Generator
 from .generator_process.actions.huggingface_hub import DownloadStatus, Model as HubModel
 from .generator_process.models import Checkpoint, ModelConfig, ModelType
-from .model_scanner import ModelScanService, model_identifier, normalize_path
+from .model_scanner import ModelScanService, ScanResult, model_identifier, normalize_path, reconcile_scan_result
 
 is_downloading = False
 _preferences_generation = None
@@ -23,6 +23,7 @@ _initial_models_timer = None
 _model_scan_service = None
 _model_refresh_timer = None
 _model_refresh_token = None
+_published_model_scan = ScanResult()
 
 
 def _preferences_for_callback(generation):
@@ -195,6 +196,7 @@ def _build_model_catalog(hub_models, scan):
     model_list = list(hub_models)
     models = {_legacy_model_identifier(model.id): model for model in model_list}
     checkpoints = {}
+    linked_paths = {linked.identity for linked in scan.linked}
     for linked in scan.linked:
         config = ModelConfig[linked.config]
         model = HubModel(linked.path, '', [], -1, -1, ModelType.from_config(config))
@@ -214,6 +216,8 @@ def _build_model_catalog(hub_models, scan):
             models[identifier] = model
 
     for scanned in scan.models:
+        if scanned.identity in linked_paths:
+            continue  # Fresh explicit configs override retained folder discoveries.
         config = ModelConfig[scanned.classification.config]
         model = HubModel(scanned.path, '', [], -1, -1, ModelType[scanned.classification.model_type])
         model.identifier = scanned.identifier
@@ -238,8 +242,9 @@ def _cancel_model_refresh():
 
 def shutdown_model_discovery():
     """Invalidate callbacks before unregister/reload; never wait for filesystem IO."""
-    global _model_scan_service, _preferences_generation
+    global _model_scan_service, _preferences_generation, _published_model_scan
     _preferences_generation = None
+    _published_model_scan = ScanResult()
     _cancel_model_refresh()
     if _model_scan_service is not None:
         _model_scan_service.close()
@@ -275,7 +280,7 @@ def fetch_installed_models(blocking=True):
 
     def poll():
         nonlocal scan
-        global _model_refresh_timer, _model_refresh_token
+        global _model_refresh_timer, _model_refresh_token, _published_model_scan
         current = _preferences_for_callback(generation)
         if current is None or token is not _model_refresh_token:
             return None
@@ -286,15 +291,29 @@ def fetch_installed_models(blocking=True):
         try:
             if scan.error:
                 raise RuntimeError(scan.error)
-            if scan.limited:
-                raise RuntimeError("Scan limit reached. The previous model list is unchanged; choose smaller folders or rescan.")
-            model_list, checkpoints, models = _build_model_catalog(future.result(), scan)
+            if scan.cancelled:
+                raise RuntimeError("Model scan was cancelled; the previous model list is unchanged.")
+            catalog_scan = reconcile_scan_result(scan, _published_model_scan, folders)
+            model_list, checkpoints, models = _build_model_catalog(future.result(), catalog_scan)
             # All preparation is finished. Replace the RNA list and both maps in
             # one main-thread callback, retaining the old catalog on failure.
             if set_model_list('installed_models', model_list):
                 checkpoint_lookup._checkpoints = checkpoints
                 model_lookup._models = models
-            message = f"Found {len(scan.models)} folder models; skipped {scan.skipped} unsupported or invalid files."
+                _published_model_scan = catalog_scan
+            if scan.limited:
+                if scan.linked_complete:
+                    message = ("Folder scan limit reached. Hub models and checkpoint links refreshed; "
+                               "previously discovered models from registered folders retained. "
+                               "Choose smaller folders or rescan.")
+                else:
+                    retained = ("Previous local models retained with unchanged link settings. "
+                                if catalog_scan.models or catalog_scan.linked
+                                else "Local models need a complete checkpoint-link scan. ")
+                    message = ("Checkpoint-link scan limit reached. Hub models refreshed. "
+                               + retained + "Choose smaller linked folders or rescan.")
+            else:
+                message = f"Found {len(scan.models)} folder models; skipped {scan.skipped} unsupported or invalid files."
             if scan.errors:
                 message += f" {scan.errors} unreadable locations."
             current.model_scan_status = message

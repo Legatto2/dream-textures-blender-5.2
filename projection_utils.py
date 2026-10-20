@@ -66,7 +66,7 @@ def projection_task(task_api, *, depth, image, strength, use_control_net):
 
 @contextmanager
 def temporary_render_settings(render, space, size, filepath):
-    """Restore every changed setting even if capture or an earlier restore fails."""
+    """Restore capture settings and saved format-dependent options on every exit."""
     width, height = size
     if width <= 0 or height <= 0:
         raise ValueError("The projection viewport must have a positive size.")
@@ -75,11 +75,17 @@ def temporary_render_settings(render, space, size, filepath):
         (render, name, getattr(render, name))
         for name in ("resolution_x", "resolution_y", "resolution_percentage", "filepath")
     ]
-    # Restore the format before its dependent options, whose valid enums differ.
+    # Blender 5 restricts file_format by media_type. Both setters can coerce
+    # color/depth, multiview, and output color space; restore them in that order.
+    if hasattr(image_settings, "media_type"):
+        saved.append((image_settings, "media_type", image_settings.media_type))
     saved.append((image_settings, "file_format", image_settings.file_format))
-    for name in ("color_mode", "color_depth"):
+    for name in ("color_mode", "color_depth", "views_format"):
         if hasattr(image_settings, name):
             saved.append((image_settings, name, getattr(image_settings, name)))
+    colorspace = getattr(image_settings, "linear_colorspace_settings", None)
+    if colorspace is not None and hasattr(colorspace, "name"):
+        saved.append((colorspace, "name", colorspace.name))
     for name in ("use_border", "use_crop_to_border"):
         if hasattr(render, name):
             saved.append((render, name, getattr(render, name)))
@@ -90,6 +96,8 @@ def temporary_render_settings(render, space, size, filepath):
         render.resolution_x, render.resolution_y = width, height
         render.resolution_percentage = 100
         render.filepath = filepath
+        if hasattr(image_settings, "media_type"):
+            image_settings.media_type = 'IMAGE'
         image_settings.file_format = 'PNG'
         if hasattr(image_settings, "color_mode"):
             image_settings.color_mode = 'RGBA'
