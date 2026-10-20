@@ -12,14 +12,11 @@ from .generator_process.future import Future
 from .generator_process.models import CPUOffload, ModelType, Optimizations, Scheduler
 
 from .preferences import checkpoint_lookup, StableDiffusionPreferences, _template_model_download_progress, InstallModel, model_lookup
+from .model_selection import ModelSelection
 
 from functools import reduce
 
-def _convert_models(models):
-    return [
-        None if model is None else (model.id, model.name, model.description)
-        for model in models
-    ]
+_refiner_selection = ModelSelection('_dream_textures_refiner_identifier')
 
 class DiffusersBackend(Backend):
     name = "HuggingFace Diffusers"
@@ -77,14 +74,23 @@ class DiffusersBackend(Backend):
     cpu_only: BoolProperty(name="CPU Only", default=False, description="Disables GPU acceleration and is extremely slow")
 
     use_sdxl_refiner: BoolProperty(name="Use SDXL Refiner", default=False, description="Provide a refiner model to run automatically after the initial generation")
-    sdxl_refiner_model: EnumProperty(name="SDXL Refiner Model", items=lambda self, context: _convert_models(self.list_models(context)), description="Specify which model to use as a refiner")
+    sdxl_refiner_model: EnumProperty(
+        name="SDXL Refiner Model",
+        items=lambda self, context: _refiner_selection.items(
+            self, self.list_models(context or bpy.context), resolve=self.resolve_model_identifier),
+        get_transform=lambda self, value, is_set: _refiner_selection.get(
+            self, value, is_set, self.list_models(bpy.context), resolve=self.resolve_model_identifier),
+        set_transform=lambda self, value, current_value, is_set: _refiner_selection.set(
+            self, value, current_value, is_set, self.list_models(bpy.context), resolve=self.resolve_model_identifier),
+        description="Specify which model to use as a refiner",
+    )
 
     def list_models(self, context):
         def model_case(model, i):
             return Model(
-                name=model.model_base.replace('models--', '').replace('--', '/'),
+                name=model.model_label or model.model_base.replace('models--', '').replace('--', '/'),
                 description=ModelType[model.model_type].name,
-                id=model.model_base.replace('models--', '').replace('--', '/')
+                id=model.model_identifier or model.model_base.replace('models--', '').replace('--', '/')
             )
         models = {}
         for i, model in enumerate(context.preferences.addons[StableDiffusionPreferences.bl_idname].preferences.installed_models):
@@ -106,13 +112,18 @@ class DiffusersBackend(Backend):
     def list_controlnet_models(self, context):
         return [
             Model(
-                name=model.model_base.replace('models--', '').replace('--', '/'),
+                name=model.model_label or model.model_base.replace('models--', '').replace('--', '/'),
                 description="ControlNet",
-                id=model.model_base.replace('models--', '').replace('--', '/')
+                id=model.model_identifier or model.model_base.replace('models--', '').replace('--', '/')
             )
             for model in context.preferences.addons[StableDiffusionPreferences.bl_idname].preferences.installed_models
             if model.model_type == ModelType.CONTROL_NET.name
         ]
+
+    def resolve_model_identifier(self, identifier):
+        """Resolve saved aliases without changing the selected checkpoint/config."""
+        model = model_lookup.get(identifier)
+        return getattr(model, 'identifier', None) or identifier
 
     def list_schedulers(self, context) -> List[str]:
         return [scheduler.value for scheduler in Scheduler]
@@ -172,7 +183,9 @@ class DiffusersBackend(Backend):
                 if len(arguments.control_nets) > 0:
                     future = gen.control_net(
                         **common_kwargs,
-                        control_net=[c.model for c in arguments.control_nets],
+                        # Backport: JasonHoku/dream-textures 84fdcfc. Resolve local
+                        # checkpoint links consistently with prompt generation.
+                        control_net=[checkpoint_lookup.get(c.model) for c in arguments.control_nets],
                         control=[c.image for c in arguments.control_nets],
                         controlnet_conditioning_scale=[c.strength for c in arguments.control_nets],
                         image=image,
@@ -196,7 +209,7 @@ class DiffusersBackend(Backend):
                 if len(arguments.control_nets) > 0:
                     future = gen.control_net(
                         **common_kwargs,
-                        control_net=[c.model for c in arguments.control_nets],
+                        control_net=[checkpoint_lookup.get(c.model) for c in arguments.control_nets],
                         control=[c.image for c in arguments.control_nets],
                         controlnet_conditioning_scale=[c.strength for c in arguments.control_nets],
                         image=image,

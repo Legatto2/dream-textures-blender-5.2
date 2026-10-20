@@ -16,7 +16,9 @@ class Future:
     _done_event: threading.Event
     done: bool = False
     cancelled: bool = False
-    check_cancelled: Callable[[], bool] = lambda: False
+    # Backport: JasonHoku/dream-textures 32c7870. A class function binds self;
+    # the actor can still replace it with a zero-argument instance callback.
+    check_cancelled: Callable[[], bool] = lambda self: False
     call_done_on_exception: bool = True
 
     def __init__(self):

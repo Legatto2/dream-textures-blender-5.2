@@ -336,7 +336,8 @@ class LifecycleTests(unittest.TestCase):
             "accelerate": module("accelerate"),
             "accelerate.hooks": module("accelerate.hooks", remove_hook_from_module=remove_hook_from_module),
             "dt_regression": module("dt_regression"),
-            "dt_regression.generator_process": module("dt_regression.generator_process"),
+            "dt_regression.generator_process": module(
+                "dt_regression.generator_process", __path__=[str(SOURCE / "generator_process")]),
             "dt_regression.generator_process.actions": module("dt_regression.generator_process.actions"),
             "dt_regression.generator_process.models": module(
                 "dt_regression.generator_process.models", Checkpoint=Checkpoint,

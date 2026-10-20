@@ -4,7 +4,7 @@
 
 **Basic pretrained image generation and one-face ControlNet projection work on the reported Windows setup.** After applying the two-file hotfix to compat.2 and restarting Blender, Michael Heald reported **three consecutive projection runs without errors**, with the generator left running between runs. **Seamless was Auto** during those three runs.
 
-Source revision **0.4.2-compat.3** integrates the same production changes. It remains experimental and unreleased. The hardware check used **compat.2 plus the hotfix**, rather than a fresh installation of a compat.3 package.
+Source revision **0.4.2-compat.3** integrates those fixes and additional backports from Jason Hoku's fork. It remains experimental and unreleased. The hardware check used **compat.2 plus the original two-file hotfix**, before the additional backports or a fresh installation of a compat.3 package.
 
 ## Evidence and scope
 
@@ -17,6 +17,7 @@ The Windows results below are based on the maintainer's reports and screenshots 
 | One selected cube face | Later screenshots show the generated brick pattern on the selected face using the projected material and UV map. This establishes basic projection, not every UV layout or every face. |
 | Pale strip along the face's top | The enlarged generated image contains a light gray cap directly above the brick panel. That content explains the corresponding strip in the projection; the image also contains surrounding sky. |
 | Recommended-model preference UI | The stale field name is corrected and covered by a focused simulated validation-UI test. The specific recommendation UI path was not separately reported as retested in Windows. |
+| JasonHoku backports | Local model folders, projection capture/diagnostics, Depth and Color routing, and other backend fixes have focused offline checks. They were added after the reported Windows runs and still need interactive Blender acceptance. |
 | New compat.3 installation package | Source packaging checks can establish archive integrity; installation of the newly assembled package in Blender remains unverified. |
 | Baking and broader workflows | Bake was off for this projection check. Baking, reprojection onto existing UV layouts, interactive painting, and broader viewport/render workflows are still unverified on the target machine. |
 | Performance and other platforms | No controlled latency/VRAM benchmark, extended soak test, or other-machine acceptance result was obtained. |
@@ -50,7 +51,7 @@ The cached loader reuses model components while rebuilding the ControlNet contai
 
 The fix removes the old pipeline's tracked hooks and recursively detaches component hooks **before** cache pruning or ControlNet replacement. The optimizer can then install a complete set on the reconstructed pipeline while retaining the cached weights. The separate UI correction changes the recommended-model download field from `prefer_fp16_revision` to the existing `prefer_fp16_variant` property.
 
-The integrated production files are byte-identical to those in the delivered hotfix:
+The following hashes identify the **original delivered two-file hotfix tested on compat.2**. They are historical evidence, not hashes of the current files: subsequent backports modify ControlNet weight selection and backend model/dispatch code. The `_remove_cached_pipeline_hooks` helper and `load_model()` cache lifecycle function remain exactly unchanged from the integrated hotfix. Current packaged file hashes are recorded in [BUILD_MANIFEST.json](BUILD_MANIFEST.json).
 
 | File | SHA-256 |
 |---|---|
@@ -65,15 +66,17 @@ The focused standard-library suite, [test_offload_lifecycle.py](tests/test_offlo
 
 The integrated suite passes **8 tests**. Against the original pre-hotfix snapshot, it fails as expected and reproduces the simulated device mismatch on attempts two and three. A mutation that disables recursive detachment is also rejected by the strengthened nested-hook checks. Test commands and the captured current-run output are linked from [TESTING.md](TESTING.md).
 
-The existing private installer suite was also rerun: **16 tests passed**. Both current suites ran on Linux with **Python 3.12.14**, using standard-library simulations and temporary files; they did not install or execute a production GPU runtime. See [offload regression output](evidence/offload-lifecycle-2026-10-20.log) and [installer output](evidence/installer-2026-10-20.log). Syntax compilation passed for the repository's 97 Python files, and the updated documentation's relative file links were checked.
+The existing private installer suite was also rerun: **16 tests passed**. These initial two suites ran on Linux with **Python 3.12.14**, using standard-library simulations and temporary files; they did not install or execute a production GPU runtime. See [offload regression output](evidence/offload-lifecycle-2026-10-20.log) and [installer output](evidence/installer-2026-10-20.log).
+
+The combined run passed **83 tests**: 16 installer, 8 offload/UI, 8 backend backport, 17 projection input, 15 model discovery, 5 model dispatch/refiner, and 14 selection-persistence tests. It used Linux Python 3.12.14 and NumPy 2.3.5. The [combined offline output](evidence/offline-backports-2026-10-20.log) and [suite descriptions](TESTING.md#current-offline-compatibility-checks) record the actual execution. All **108 Python files** also passed source compilation. NumPy is used for array operations; Blender/GPU/model dependencies remain simulated. These checks do not transfer the earlier Windows acceptance to the new features. The [fork review](JASONHOKU_REVIEW_2026-10-20.md) records exactly what was adapted and what remains separate.
 
 The historical **47 application/runtime tests** belong to compat.1: 11 Blender frontend, 14 real tiny-model CPU backend, 16 private installer, and 6 Blender worker tests. Their existing logs and production hashes are preserved. That full suite was not rerun for compat.3, and its count must not be presented as a new Windows or hotfix test result.
 
 ## What remains
 
 1. Install the newly assembled compat.3 package in Blender and confirm it selects the existing validated runtime.
-2. Exercise Bake and projection onto an existing UV layout.
-3. Check broader interactive workflows and representative production assets.
+2. Check the new Model Folders UI, model selection after rescan, and the Depth / Depth and Color capture diagnostics in Blender. Confirm selected models/configurations and capture orientation using the target setup.
+3. Exercise Bake and projection onto an existing UV layout, then broader interactive workflows and representative production assets.
 4. Measure performance and run longer sessions on the target hardware before making stability or throughput claims.
 
 The brick cap and surrounding sky are generated image content. Improving that output is a texture-quality task; it is not evidence that the repaired repeat-run cache lifecycle is failing.

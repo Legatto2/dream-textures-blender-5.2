@@ -6,7 +6,9 @@ An experimental community build for **Blender 5.2.2 LTS on Windows x64**, using 
 
 Original project by **Carson Katri and the Dream Textures contributors**. Compatibility fork maintained by **Michael Heald ([Legatto2](https://github.com/Legatto2))**. See [attribution and licensing](ATTRIBUTION.md).
 
-This revision integrates the **ControlNet repeat-run hotfix** and corrects the FP16 preference used by the recommended-model UI. Michael Heald has reported successful pretrained SD 1.5 generation on Windows and three consecutive ControlNet projection runs without errors after applying the same two-file hotfix to **0.4.2-compat.2**. A later screenshot check confirmed brick coverage on one selected cube face.
+This revision integrates the **ControlNet repeat-run hotfix**, corrects the recommended-model FP16 preference, and adapts selected improvements from **Jason Hoku's Dream Textures fork**: local model folders, projection capture/diagnostics, and backend fixes. The [fork review](compatibility/JASONHOKU_REVIEW_2026-10-20.md) records the source commits and compatibility decisions.
+
+Michael Heald reported successful pretrained SD 1.5 generation on Windows and three consecutive ControlNet projection runs without errors after applying the original two-file hotfix to **0.4.2-compat.2**. A later screenshot check confirmed brick coverage on one selected cube face. Those Windows tests preceded the additional backports in this revision.
 
 The build remains experimental. These results cover the tested Windows/RTX 5060 setup and basic projection; baking, broader interactive workflows, other hardware, and performance are not yet validated. See the [current validation record](compatibility/VALIDATION_2026-10-20.md) for settings, evidence scope, and remaining work.
 
@@ -81,8 +83,20 @@ For **0.4.2-compat.2**, verification covers the original archive and source hash
 
 - Remove stale offload hooks before cached pipeline components are reused and the ControlNet container is replaced. This allows the new pipeline to receive a complete set of hooks and addresses the reported later-run CPU/CUDA mismatch.
 - Use `prefer_fp16_variant` in the recommended-model UI, matching the existing preference and download operator.
-- Add focused offload lifecycle regression coverage and record the current Windows/projection acceptance results.
-- Update build metadata and retain the existing dependency pins, license notices, and historical evidence.
+- Add opt-in local **Model Folders** discovery. Folder scanning runs in the background and offers recognized supported `.safetensors` checkpoints while preserving explicit manual links and their configurations.
+- Save new model, ControlNet, and refiner selections by their full identifiers so a folder rescan cannot silently retarget them. Missing selected models stay unavailable until restored or explicitly replaced.
+- Use an explicit depth geometry mask, handle empty/flat captures, and retain **Dream Textures Projection Depth** and **Dream Textures Projection Color** images for inspection in the Image Editor. Captures use the invoking viewport; invalid captures are rejected before UV/material changes, and render settings are restored after capture.
+- Make ControlNet **Depth and Color** use the captured color image as its initial image. Resolve linked ControlNet checkpoints for image-to-image and inpainting as well as text-to-image.
+- Fix the default cancellation callback, exclude incomplete ControlNet downloads from generation choices, and use the supported DPT image processor API.
+- Add focused offline regressions and a Python 3.13 GitHub Actions check that builds the installation ZIP. Keep the existing dependency pins, private runtime, license notices, and historical evidence.
+
+### Local model folders
+
+In Dream Textures' add-on preferences, use **Model Folders → Add Model Folder** to add a checkpoint directory, then **Rescan** when files change. This section appears below **Link Checkpoint** when the runtime is ready. Discovery does not copy model weights. Recognized files appear in the model choices after the scan completes; duplicate folder paths are combined, and explicit checkpoint links retain their selected configurations. Removing a folder removes discovery from that location without deleting files.
+
+Automatic discovery accepts supported, identifiable `.safetensors` checkpoints. Unknown or ambiguous files, including SD 2 checkpoints without enough prediction-type metadata, still need **Link Checkpoint**. Scans have directory, entry, header-size, and elapsed-time limits. A capped scan keeps the previous catalog; add a more specific directory and rescan when needed. This feature does not add Flux, Z-Image, GGUF, or a ComfyUI generation backend. See the [integration review](compatibility/JASONHOKU_REVIEW_2026-10-20.md).
+
+Selecting a model now saves its full identifier for later rescans and file reloads. Older saved files retain their numeric interpretation over the downloaded/manually linked model list until a model is selected again; folder-discovered rows are excluded from that legacy interpretation. A discovered file can later be explicitly linked to choose its configuration while retaining its saved identity.
 
 ## Runtime changes retained from 0.4.2-compat.1
 
@@ -104,6 +118,9 @@ For **0.4.2-compat.2**, verification covers the original archive and source hash
 | Out of GPU memory during generation | Use 512 × 512, batch 1, Half Precision, CPU Offload **Model**, and close other GPU applications. |
 | A second or later ControlNet run reports CUDA inputs with CPU weights | Use the compat.3 source fix or the verified compat.2 hotfix, then fully restart Blender. If it recurs, retain the actual traceback and settings. |
 | A projected face has a gray cap, background, or an unexpected object | Inspect the generated image itself. The same pixels in that image indicate generated content to refine; they do not establish a new material or UV failure. |
+| Projection reports an empty depth capture | Inspect **Dream Textures Projection Depth** in the Image Editor and check the invoking viewport's visible geometry. Empty captures stop before UV/material changes. |
+| Projection reports uniform depth | A front-on flat face can produce uniform depth. Generation can proceed; a slight viewing angle provides more shape information when needed. |
+| A model folder omits a file | Check scan status and the checkpoint format. Automatic discovery is conservative; use **Link Checkpoint** with the appropriate configuration for an ambiguous supported checkpoint. |
 | Successive images look different | Check **Random Seed**. Disable it and choose a fixed seed when comparing prompt or framing changes. **Seamless Auto** is a separate setting. |
 | A later runtime update causes trouble | Choose **Restore Previous Runtime**, then restart Blender. |
 | Two Dream Textures copies are reported | Disable the old duplicate and enable one copy of this build. |
@@ -112,7 +129,7 @@ This add-on retains its module name **dream_textures** to preserve existing pref
 
 ## Source and license
 
-Dream Textures source and original contributions to this compatibility fork are **GPL-3.0-or-later**; see [LICENSE](LICENSE). The [attribution notice](ATTRIBUTION.md) credits Carson Katri and the original contributors, identifies Michael Heald as compatibility maintainer, and records the modifications. The original project README is retained as [README.upstream.md](README.upstream.md). This compatibility build's implementation and test source are included.
+Dream Textures source and original contributions to this compatibility fork are **GPL-3.0-or-later**; see [LICENSE](LICENSE). The [attribution notice](ATTRIBUTION.md) credits Carson Katri and the original contributors, Jason Hoku for the adapted changes, and Michael Heald as compatibility maintainer. The original project README is retained as [README.upstream.md](README.upstream.md). This compatibility build's implementation and test source are included.
 
 The bundled watermark wheel is MIT-licensed; its license and exact modification record are in **compatibility/invisible-watermark/**. See **THIRD_PARTY_NOTICES.md**.
 

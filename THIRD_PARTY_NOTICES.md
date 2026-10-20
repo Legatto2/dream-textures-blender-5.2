@@ -11,11 +11,12 @@ This compatibility build modifies Dream Textures 0.4.1:
 - Compatibility maintainer: Michael Heald (Legatto2).
 - Compatibility implementation: 0.4.2-compat.1, 19 October 2026.
 - Attribution and packaging revision: 0.4.2-compat.2, 19 October 2026; runtime behavior and dependency pins unchanged.
-- ControlNet hotfix source revision: 0.4.2-compat.3, 20 October 2026; cached offload lifecycle and recommended-model preference corrections, with updated regression and Windows validation records.
+- Compatibility source revision: 0.4.2-compat.3, 20 October 2026; cached offload lifecycle and recommended-model preference corrections, selected Jason Hoku backports, and updated regression/Windows validation records.
+- Adapted fork contributions: Jason Hoku, from [JasonHoku/dream-textures](https://github.com/JasonHoku/dream-textures) commits `32c7870`, `63c19fd`, and `84fdcfc`, reviewed at `50d53f0724f94f1c8449ed749a711de4cd2991e4`. These cover backend fixes, local model folders, and projection/ControlNet improvements under the existing Dream Textures license. See the [review record](compatibility/JASONHOKU_REVIEW_2026-10-20.md) for exact provenance and adaptation decisions.
 
 See [ATTRIBUTION.md](ATTRIBUTION.md) for the complete original-project and compatibility-fork credits. Original contributions made for this fork are offered under GPL-3.0-or-later, consistent with the upstream add-on; [LICENSE](LICENSE) is retained unchanged.
 
-The complete modified add-on source is included in the installation ZIP. The original 0.4.2-compat.1 implementation patch is retained as **compatibility/upstream-changes.patch**. The current source includes the subsequent 0.4.2-compat.2 attribution and packaging changes and the 0.4.2-compat.3 hotfix described in the [current validation record](compatibility/VALIDATION_2026-10-20.md).
+The complete modified add-on source is included in the installation ZIP. The original 0.4.2-compat.1 implementation patch is retained as **compatibility/upstream-changes.patch**. The current source includes the subsequent 0.4.2-compat.2 attribution and packaging changes and the 0.4.2-compat.3 hotfix and backports described in the [current validation record](compatibility/VALIDATION_2026-10-20.md).
 
 ## Bundled invisible-watermark wheel
 

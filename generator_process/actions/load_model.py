@@ -2,6 +2,7 @@ import gc
 import logging
 import os
 from ..models import Checkpoint, ModelConfig, Scheduler
+from ..model_weights import CONTROLNET_FP16_WEIGHTS, find_controlnet_weights
 
 logger = logging.getLogger(__name__)
 
@@ -100,24 +101,23 @@ def _load_controlnet_model(cache, model, half_precision):
         # controlnet models shouldn't have a fp16 revision to worry about
         raise FileNotFoundError(f"{model} does not contain a main revision")
 
-    fp16_weights = ["diffusion_pytorch_model.fp16.safetensors", "diffusion_pytorch_model.fp16.bin"]
-    fp32_weights = ["diffusion_pytorch_model.safetensors", "diffusion_pytorch_model.bin"]
-    if half_precision:
-        weights_names = fp16_weights + fp32_weights
-    else:
-        weights_names = fp32_weights + fp16_weights
-
-    weights = next((name for name in weights_names if os.path.isfile(os.path.join(revisions["main"], name))), None)
+    weights = find_controlnet_weights(revisions["main"], half_precision)
     if weights is None:
-        raise FileNotFoundError(f"Can't find appropriate weights in {model}")
-    half_weights = weights in fp16_weights
+        # Backport diagnostic: JasonHoku/dream-textures 32c7870.
+        raise FileNotFoundError(
+            f"No supported non-empty ControlNet weights are available in {model}. "
+            "The download may still be in progress or incomplete. "
+            "Finish or retry the download, then try again."
+        )
+    half_weights = weights in CONTROLNET_FP16_WEIGHTS
     if not half_precision and half_weights:
         logger.warning(f"Can't load fp32 weights for model {model}, attempting to load fp16 instead")
 
     return ControlNetModel.from_pretrained(
         revisions["main"],
         torch_dtype=torch.float16 if half_precision else None,
-        variant="fp16" if half_weights else None
+        variant="fp16" if half_weights else None,
+        use_safetensors=weights.endswith(".safetensors"),
     )
 
 

@@ -1,0 +1,144 @@
+Compatibility backports — 20 October 2026
+Linux Python 3.12.14; NumPy 2.3.5
+Focused offline suites; no Blender rendering, Torch, CUDA, or neural model inference.
+
+
+Running test_installer.py
+test_addon_module_reload_does_not_hot_swap_native_libraries (__main__.InstallerTests.test_addon_module_reload_does_not_hot_swap_native_libraries) ... ok
+test_cancel_between_validation_and_activation_keeps_previous (__main__.InstallerTests.test_cancel_between_validation_and_activation_keeps_previous) ... Downloading and installing the Dream Textures GPU libraries. Blender can remain open.
+Checking dependency imports and the graphics device.
+ok
+test_cancel_stops_owned_subprocess_promptly (__main__.InstallerTests.test_cancel_stops_owned_subprocess_promptly) ... ok
+test_cpu_and_wrong_abi_cannot_satisfy_cuda_readiness (__main__.InstallerTests.test_cpu_and_wrong_abi_cannot_satisfy_cuda_readiness) ... ok
+test_embedded_python_selection_never_uses_blender_executable (__main__.InstallerTests.test_embedded_python_selection_never_uses_blender_executable) ... ok
+test_failed_pointer_commit_preserves_previous_selection (__main__.InstallerTests.test_failed_pointer_commit_preserves_previous_selection) ... ok
+test_hermes_environment_cannot_redirect_pip_or_python (__main__.InstallerTests.test_hermes_environment_cannot_redirect_pip_or_python) ... ok
+test_install_selection_is_frozen_until_next_blender_process (__main__.InstallerTests.test_install_selection_is_frozen_until_next_blender_process) ... ok
+test_path_traversal_and_symlink_escape_are_rejected (__main__.InstallerTests.test_path_traversal_and_symlink_escape_are_rejected) ... ok
+test_pip_can_run_directly_from_bundled_wheel_without_installing_it (__main__.InstallerTests.test_pip_can_run_directly_from_bundled_wheel_without_installing_it) ... ok
+test_pip_command_has_private_target_fixed_indexes_and_no_shell (__main__.InstallerTests.test_pip_command_has_private_target_fixed_indexes_and_no_shell) ... ok
+test_replacement_and_rollback_preserve_old_packages (__main__.InstallerTests.test_replacement_and_rollback_preserve_old_packages) ... ok
+test_resolver_failure_removes_only_this_attempt (__main__.InstallerTests.test_resolver_failure_removes_only_this_attempt) ... Downloading and installing the Dream Textures GPU libraries. Blender can remain open.
+ok
+test_runtime_lock_releases_after_error_and_rejects_overlap (__main__.InstallerTests.test_runtime_lock_releases_after_error_and_rejects_overlap) ... ok
+test_unvalidated_runtime_cannot_replace_working_runtime (__main__.InstallerTests.test_unvalidated_runtime_cannot_replace_working_runtime) ... ok
+test_windows_abi3_and_torch_dll_directories_keep_live_handles (__main__.InstallerTests.test_windows_abi3_and_torch_dll_directories_keep_live_handles) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 1.071s
+
+OK
+
+Running test_offload_lifecycle.py
+test_changed_controlnet_releases_old_wrapper_before_reuse (__main__.LifecycleTests.test_changed_controlnet_releases_old_wrapper_before_reuse) ... ok
+test_multiple_controlnets_can_be_reordered_without_losing_placement (__main__.LifecycleTests.test_multiple_controlnets_can_be_reordered_without_losing_placement) ... ok
+test_offload_disabled_does_not_install_or_remove_hooks (__main__.LifecycleTests.test_offload_disabled_does_not_install_or_remove_hooks) ... ok
+test_plain_model_offload_rebinds_cleanup_to_converted_pipeline (__main__.LifecycleTests.test_plain_model_offload_rebinds_cleanup_to_converted_pipeline) ... ok
+test_same_controlnet_three_consecutive_generations (__main__.LifecycleTests.test_same_controlnet_three_consecutive_generations) ... ok
+test_sequential_offload_detaches_nested_hooks_before_wrapper_replacement (__main__.LifecycleTests.test_sequential_offload_detaches_nested_hooks_before_wrapper_replacement) ... ok
+test_task_conversion_keeps_shared_weights_with_current_hook_ownership (__main__.LifecycleTests.test_task_conversion_keeps_shared_weights_with_current_hook_ownership) ... ok
+test_incompatible_model_download_uses_current_half_precision_preference (__main__.ValidationUITests.test_incompatible_model_download_uses_current_half_precision_preference) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.153s
+
+OK
+Behavioral simulation against /workspace/scratch/405d34467702/dream-textures-repo; no real CUDA or Blender execution.
+
+Running test_backend_backports.py
+test_hub_blob_symlinks_must_resolve_to_available_weights (__main__.ControlNetAvailabilityTests.test_hub_blob_symlinks_must_resolve_to_available_weights) ... ok
+test_legacy_cache_models_remain_discoverable (__main__.ControlNetAvailabilityTests.test_legacy_cache_models_remain_discoverable) ... ok
+test_precision_preference_and_available_fallback_are_preserved (__main__.ControlNetAvailabilityTests.test_precision_preference_and_available_fallback_are_preserved) ... ok
+test_supported_nonempty_weights_are_available_to_classifier_and_loader (__main__.ControlNetAvailabilityTests.test_supported_nonempty_weights_are_available_to_classifier_and_loader) ... ok
+test_unavailable_controlnet_is_not_classified_or_loaded (__main__.ControlNetAvailabilityTests.test_unavailable_controlnet_is_not_classified_or_loaded) ... ok
+test_depth_estimation_loads_the_current_dpt_image_processor (__main__.DepthProcessorTests.test_depth_estimation_loads_the_current_dpt_image_processor) ... ok
+test_actor_callback_override_remains_an_instance_function (__main__.FutureTests.test_actor_callback_override_remains_an_instance_function) ... ok
+test_default_cancellation_callback_is_callable (__main__.FutureTests.test_default_cancellation_callback_is_callable) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.172s
+
+OK
+Backend backport checks against /workspace/scratch/405d34467702/dream-textures-repo; no real CUDA or Blender execution.
+
+Running test_projection_inputs.py
+test_explicit_mask_uniform_and_gpu_state_restoration (__main__.DepthGPUCleanupTests.test_explicit_mask_uniform_and_gpu_state_restoration) ... ok
+test_gpu_read_failure_restores_state_and_frees_offscreen (__main__.DepthGPUCleanupTests.test_gpu_read_failure_restores_state_and_frees_offscreen) ... ok
+test_timer_failure_unblocks_waiting_thread_and_propagates (__main__.DepthGPUCleanupTests.test_timer_failure_unblocks_waiting_thread_and_propagates) ... ok
+test_empty_mask_is_black_in_both_directions (__main__.DepthNormalizationTests.test_empty_mask_is_black_in_both_directions) ... ok
+test_flat_geometry_is_mid_depth_and_keeps_background_black (__main__.DepthNormalizationTests.test_flat_geometry_is_mid_depth_and_keeps_background_black) ... ok
+test_geometry_endpoints_and_inversion_ignore_background (__main__.DepthNormalizationTests.test_geometry_endpoints_and_inversion_ignore_background) ... ok
+test_nonfinite_pixels_are_excluded_and_invalid_shapes_are_rejected (__main__.DepthNormalizationTests.test_nonfinite_pixels_are_excluded_and_invalid_shapes_are_rejected) ... ok
+test_color_uses_real_top_to_bottom_conversion_and_removes_loaded_image (__main__.ProjectionCaptureTests.test_color_uses_real_top_to_bottom_conversion_and_removes_loaded_image) ... ok
+test_empty_capture_rejects_before_material_uv_or_color_work (__main__.ProjectionCaptureTests.test_empty_capture_rejects_before_material_uv_or_color_work) ... ok
+test_mismatched_color_dimensions_reject_and_cleanup (__main__.ProjectionCaptureTests.test_mismatched_color_dimensions_reject_and_cleanup) ... ok
+test_operator_explicitly_dispatches_each_input_mode_before_material_work (__main__.ProjectionCaptureTests.test_operator_explicitly_dispatches_each_input_mode_before_material_work) ... ok
+test_owned_diagnostics_do_not_overwrite_an_unrelated_name_collision (__main__.ProjectionCaptureTests.test_owned_diagnostics_do_not_overwrite_an_unrelated_name_collision) ... ok
+test_render_failure_restores_settings_and_removes_temporary_directory (__main__.ProjectionCaptureTests.test_render_failure_restores_settings_and_removes_temporary_directory) ... ok
+test_view_uses_invoking_area_not_another_viewport (__main__.ProjectionCaptureTests.test_view_uses_invoking_area_not_another_viewport) ... ok
+test_capture_exception_restores_resolution_format_border_and_overlays (__main__.RenderSettingsTests.test_capture_exception_restores_resolution_format_border_and_overlays) ... ok
+test_invalid_size_does_not_change_settings (__main__.RenderSettingsTests.test_invalid_size_does_not_change_settings) ... ok
+test_restore_continues_after_one_setting_raises (__main__.RenderSettingsTests.test_restore_continues_after_one_setting_raises) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.151s
+
+OK
+Projection input checks: NumPy + simulated Blender/GPU; no live rendering or CUDA inference.
+
+Running test_model_discovery.py
+test_catalog_keeps_explicit_ids_and_separates_folder_labels (__main__.PreferencesTests.test_catalog_keeps_explicit_ids_and_separates_folder_labels) ... ok
+test_explicit_link_preserves_prior_folder_selection_without_duplicate_row (__main__.PreferencesTests.test_explicit_link_preserves_prior_folder_selection_without_duplicate_row) ... ok
+test_failed_or_limited_refresh_preserves_existing_catalog (__main__.PreferencesTests.test_failed_or_limited_refresh_preserves_existing_catalog) ... ok
+test_refresh_is_nonblocking_and_stale_timer_is_ignored (__main__.PreferencesTests.test_refresh_is_nonblocking_and_stale_timer_is_ignored) ... ok
+test_shutdown_invalidates_callbacks_before_reload (__main__.PreferencesTests.test_shutdown_invalidates_callbacks_before_reload) ... ok
+test_cached_headers_are_not_reread_and_deletions_disappear (__main__.ScannerTests.test_cached_headers_are_not_reread_and_deletions_disappear) ... ok
+test_components_modern_models_and_ambiguous_sd2_are_not_models (__main__.ScannerTests.test_components_modern_models_and_ambiguous_sd2_are_not_models) ... ok
+test_directory_symlink_cycle_is_not_followed (__main__.ScannerTests.test_directory_symlink_cycle_is_not_followed) ... ok
+test_explicit_link_config_and_basename_take_precedence (__main__.ScannerTests.test_explicit_link_config_and_basename_take_precedence) ... ok
+test_identity_survives_duplicate_roots_and_label_collisions (__main__.ScannerTests.test_identity_survives_duplicate_roots_and_label_collisions) ... ok
+test_malformed_file_does_not_hide_valid_neighbors (__main__.ScannerTests.test_malformed_file_does_not_hide_valid_neighbors) ... ok
+test_scan_limits_and_pre_cancelled_work (__main__.ScannerTests.test_scan_limits_and_pre_cancelled_work) ... ok
+test_supported_architectures_use_explicit_configs (__main__.ScannerTests.test_supported_architectures_use_explicit_configs) ... ok
+test_truncation_oversized_headers_and_overlapping_tensors_are_skipped (__main__.ScannerTests.test_truncation_oversized_headers_and_overlapping_tensors_are_skipped) ... ok
+test_stale_jobs_and_cancelled_jobs_cannot_publish (__main__.WorkerTests.test_stale_jobs_and_cancelled_jobs_cannot_publish) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.084s
+
+OK
+
+Running test_model_dispatch.py
+test_all_controlnet_branches_resolve_local_and_legacy_checkpoint_ids (__main__.DispatchTests.test_all_controlnet_branches_resolve_local_and_legacy_checkpoint_ids) ... ok
+test_hub_controlnet_identifiers_are_unchanged (__main__.DispatchTests.test_hub_controlnet_identifiers_are_unchanged) ... ok
+test_model_alias_resolves_to_explicit_entry_and_unknown_id_is_retained (__main__.DispatchTests.test_model_alias_resolves_to_explicit_entry_and_unknown_id_is_retained) ... ok
+test_refiner_enum_callbacks_preserve_selection_through_reorder_and_link (__main__.DispatchTests.test_refiner_enum_callbacks_preserve_selection_through_reorder_and_link) ... ok
+test_selector_labels_are_independent_from_stable_ids (__main__.DispatchTests.test_selector_labels_are_independent_from_stable_ids) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.079s
+
+OK
+
+Running test_model_selection.py
+test_base_and_control_property_callbacks_save_restore_and_resolve_aliases (__main__.CallbackIntegrationTests.test_base_and_control_property_callbacks_save_restore_and_resolve_aliases) ... ok
+test_generation_matches_resolved_base_and_control_ids_without_retargeting_missing (__main__.CallbackIntegrationTests.test_generation_matches_resolved_base_and_control_ids_without_retargeting_missing) ... ok
+test_transient_add_operator_uses_available_only_items_without_custom_storage (__main__.CallbackIntegrationTests.test_transient_add_operator_uses_available_only_items_without_custom_storage) ... ok
+test_transient_add_rejects_missing_selection_before_creating_a_net (__main__.CallbackIntegrationTests.test_transient_add_rejects_missing_selection_before_creating_a_net) ... ok
+test_add_remove_and_reorder_keep_full_selected_identifier (__main__.SelectionTests.test_add_remove_and_reorder_keep_full_selected_identifier) ... ok
+test_alias_resolution_retains_canonical_storage_and_explicit_row (__main__.SelectionTests.test_alias_resolution_retains_canonical_storage_and_explicit_row) ... ok
+test_dynamic_enum_strings_remain_referenced_across_callbacks (__main__.SelectionTests.test_dynamic_enum_strings_remain_referenced_across_callbacks) ... ok
+test_getter_is_read_only_and_explicit_unselection_does_not_fallback (__main__.SelectionTests.test_getter_is_read_only_and_explicit_unselection_does_not_fallback) ... ok
+test_invalid_numeric_set_preserves_previous_selection (__main__.SelectionTests.test_invalid_numeric_set_preserves_previous_selection) ... ok
+test_legacy_control_default_and_missing_numeric_do_not_choose_auto_model (__main__.SelectionTests.test_legacy_control_default_and_missing_numeric_do_not_choose_auto_model) ... ok
+test_legacy_numeric_positions_exclude_auto_only_groups (__main__.SelectionTests.test_legacy_numeric_positions_exclude_auto_only_groups) ... ok
+test_missing_selection_is_unavailable_and_returns_when_model_returns (__main__.SelectionTests.test_missing_selection_is_unavailable_and_returns_when_model_returns) ... ok
+test_registry_never_reuses_removed_values_or_truncates_identifiers (__main__.SelectionTests.test_registry_never_reuses_removed_values_or_truncates_identifiers) ... ok
+test_serialized_full_string_works_without_any_stored_numeric_value (__main__.SelectionTests.test_serialized_full_string_works_without_any_stored_numeric_value) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.023s
+
+OK
+
+All 7 offline suites passed.

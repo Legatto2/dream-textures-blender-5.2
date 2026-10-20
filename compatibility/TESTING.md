@@ -13,9 +13,45 @@ DT_PYTHON=/absolute/path/to/blender-5.2.2-linux-x64/5.2/python/bin/python3.13
 DT_PROFILE=/absolute/path/to/disposable-dream-profile
 ~~~
 
+## Current offline compatibility checks
+
+For **0.4.2-compat.3**, run the explicitly selected suites through [run_offline_tests.py](run_offline_tests.py). They use Python 3.10+ and NumPy, temporary checkpoint files, and simulated Blender/dependency/device boundaries. They do not run Blender, load a pretrained model, or install the production runtime. Each suite gets a separate interpreter so its module stubs cannot affect another suite.
+
+~~~bash
+python3 -m pip install numpy==2.3.4
+python3 -B "$DT_SOURCE/compatibility/run_offline_tests.py"
+~~~
+
+The NumPy pin matches the historical Blender frontend version and the new Python 3.13 CI lane. The local combined check passed **83 tests across seven suites**, using Linux Python 3.12.14 and NumPy 2.3.5. Its output is retained in [offline-backports-2026-10-20.log](evidence/offline-backports-2026-10-20.log).
+
+| Suite | Coverage |
+|---|---|
+| [Private installer](tests/test_installer.py) | Runtime isolation, activation, cancellation, rollback, and command invariants. |
+| [Offload lifecycle](tests/test_offload_lifecycle.py) | Repeated cached calls, hook ownership/cleanup, ControlNet replacement, and recommended-model preference UI. |
+| [Backend backports](tests/test_backend_backports.py) | Cancellation callback binding, supported non-empty ControlNet weight files and format/precision fallback, Hub symlinks, and DPT processor selection. |
+| [Projection inputs](tests/test_projection_inputs.py) | Finite masked depth, empty/flat captures, correct input/task/orientation, invoking viewport, owned diagnostics, and failure cleanup. |
+| [Model discovery](tests/test_model_discovery.py) | Bounded header validation and scanning, malformed files, supported/ambiguous architectures, identity/config precedence, catalog replacement, cancellation, and reload guards. |
+| [Model dispatch](tests/test_model_dispatch.py) | Local and Hub ControlNet resolution for all supported task branches and separate display labels/identifiers. |
+| [Model selection](tests/test_model_selection.py) | Full-identifier storage through menu reordering, removal, saved-state recreation, explicit-link aliases, and legacy numeric fallback. |
+
+The [Compatibility smoke checks workflow](https://github.com/Legatto2/dream-textures-blender-5.2/blob/blender-5.2-compat/.github/workflows/compatibility-smoke.yml) runs the current offline suites on Python 3.13, compiles the Python source, builds the add-on ZIP, checks that the committed manifest matches, and retains the package as an Actions artifact. Its GPU dependencies are still installed separately by the private runtime installer. This workflow does not publish a GitHub release or perform Windows/Blender/CUDA acceptance.
+
+Avoid broad unittest discovery across `compatibility/tests`: historical files in that directory require Blender or a real runtime. The focused runner deliberately names its supported suites.
+
+### Optional live model-selection acceptance
+
+[blender_model_selection.py](tests/blender_model_selection.py) checks the actual Blender enum transform/storage contract, including a temporary `.blend` save/reopen. It is separate from the offline runner and **has not been executed for this revision** because the current development environment has no Blender binary. Run it only in a disposable factory scene:
+
+~~~bash
+"$DT_BLENDER" --background --factory-startup --python-exit-code 1 \
+  --python "$DT_SOURCE/compatibility/tests/blender_model_selection.py"
+~~~
+
+This script does not perform model inference or validate projection rendering. Broader Blender and Windows acceptance remains described in the current validation record.
+
 ## Focused offload lifecycle regression
 
-For **0.4.2-compat.3**, this suite requires only Python 3.10 or newer and the standard library. It loads the current source by default and simulates dependency/device behavior; it does not run Blender or CUDA.
+This individual suite requires only Python 3.10 or newer and the standard library. It loads the current source by default and simulates dependency/device behavior; it does not run Blender or CUDA.
 
 ~~~bash
 python3 -B "$DT_SOURCE/compatibility/tests/test_offload_lifecycle.py"

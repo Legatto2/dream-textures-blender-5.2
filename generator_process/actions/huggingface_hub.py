@@ -16,6 +16,7 @@ import json
 import enum
 from ..future import Future
 from ..models import ModelType
+from ..model_weights import find_controlnet_weights
 
 
 @dataclass
@@ -69,7 +70,9 @@ def hf_list_installed_models(self) -> list[Model]:
                 with open(config, 'r') as f:
                     config_dict = json.load(f)
                     if '_class_name' in config_dict and config_dict['_class_name'] == 'ControlNetModel':
-                        return ModelType.CONTROL_NET
+                        # Adapted from JasonHoku/dream-textures 32c7870: a config
+                        # can arrive before the weights. Availability is not validity.
+                        return ModelType.CONTROL_NET if find_controlnet_weights(snapshot_folder) is not None else ModelType.UNKNOWN
                     else:
                         return ModelType.UNKNOWN
             else:
