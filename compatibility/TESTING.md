@@ -2,9 +2,9 @@
 
 These commands are for development. Normal Windows setup uses the buttons described in the main README.
 
-The supplied execution logs describe the **0.4.2-compat.1** implementation. **0.4.2-compat.2** updates attribution, documentation, and build labels only; its package/source verification is described in [BUILD_REPORT.md](BUILD_REPORT.md). The original application/runtime test suite was not repeated for that revision.
+The historical execution logs describe the **0.4.2-compat.1** implementation. **0.4.2-compat.2** updates attribution, documentation, and build labels only; its package/source verification is described in [BUILD_REPORT.md](BUILD_REPORT.md). The original application/runtime test suite was not repeated for that revision.
 
-The tests were run with the official Blender 5.2.2 Linux distribution and its embedded Python 3.13.13. Set the following paths to an extracted copy of the source ZIP and an installed test Blender:
+The original application/runtime tests were run with the official Blender 5.2.2 Linux distribution and its embedded Python 3.13.13. Set the following paths to an extracted copy of the source ZIP and an installed test Blender:
 
 ~~~bash
 DT_SOURCE=/absolute/path/to/dream_textures
@@ -13,13 +13,25 @@ DT_PYTHON=/absolute/path/to/blender-5.2.2-linux-x64/5.2/python/bin/python3.13
 DT_PROFILE=/absolute/path/to/disposable-dream-profile
 ~~~
 
+## Focused offload lifecycle regression
+
+For **0.4.2-compat.3**, this suite requires only Python 3.10 or newer and the standard library. It loads the current source by default and simulates dependency/device behavior; it does not run Blender or CUDA.
+
+~~~bash
+python3 -B "$DT_SOURCE/compatibility/tests/test_offload_lifecycle.py"
+~~~
+
+To compare against an extracted pre-hotfix source checkout, pass `--source /absolute/path/to/baseline`. Failures are expected for the original loader and preference UI. When using unittest discovery, restrict it to `test_offload_lifecycle.py`; other files in this directory require Blender.
+
+The current run is recorded in [offload-lifecycle-2026-10-20.log](evidence/offload-lifecycle-2026-10-20.log). The [Windows validation record](VALIDATION_2026-10-20.md) separately documents the maintainer's actual GPU/projection tests. The full historical 47-test suite was not rerun for this update.
+
 ## Installer invariants
 
 ~~~bash
 "$DT_PYTHON" "$DT_SOURCE/compatibility/tests/test_installer.py"
 ~~~
 
-The tests create and remove their own temporary directories. They do not install a production GPU runtime.
+The tests create and remove their own temporary directories. They do not install a production GPU runtime. The current rerun is recorded in [installer-2026-10-20.log](evidence/installer-2026-10-20.log).
 
 ## Blender frontend without AI dependencies
 
@@ -82,9 +94,9 @@ This suite deliberately crashes a worker and returns an unreadable dependency-sp
 
 ~~~bash
 "$DT_PYTHON" "$DT_SOURCE/compatibility/build_zip.py" \
-  --source "$DT_SOURCE" --output /absolute/path/to/Dream-Textures.zip
+  --source "$DT_SOURCE" --output /absolute/path/to/Dream-Textures-0.4.2-compat3-Blender52-Windows.zip
 ~~~
 
-The build helper creates a file-hash manifest, excludes caches/old dependency placeholders, and writes one top-level dream_textures folder. It validates the resulting ZIP CRCs. The supplied add-on source remains GPL-3.0-or-later.
+The build helper labels the source **0.4.2-compat.3**, regenerates the current file-hash manifest, excludes caches/old dependency placeholders, and writes one top-level dream_textures folder. It validates the resulting ZIP CRCs. The supplied add-on source remains GPL-3.0-or-later.
 
 Windows wheel-resolution evidence and dependency hashes are included in evidence/final-windows-resolution.json. A target-platform resolver check does not replace running the Windows installer and CUDA smoke test.

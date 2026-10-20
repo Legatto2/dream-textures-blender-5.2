@@ -1,10 +1,18 @@
 # Compatibility build report
 
-## Result and scope
+## Current source revision — 20 October 2026
+
+**0.4.2-compat.3** integrates the cached ControlNet offload hotfix and the recommended-model FP16 preference correction. This is an **unreleased source revision**. The two production changes are byte-identical to the hotfix applied to compat.2 during the maintainer's Windows testing. Build labels and documentation identify the integrated revision separately; dependency pins are unchanged.
+
+Michael Heald reported successful pretrained SD 1.5 generation on Windows 11 / Blender 5.2.2 LTS / RTX 5060, then three consecutive ControlNet projections without errors after applying the hotfix. The generator remained running between those runs, and Seamless was Auto. Later screenshots confirmed basic brick projection onto one selected face; a pale top strip was traced to a gray cap already present in the generated image.
+
+The current [validation record](VALIDATION_2026-10-20.md) distinguishes actual maintainer-run Windows tests, screenshot observations, focused local regressions using simulated dependencies/devices, and the historical execution evidence below. The full 47-test Blender/runtime suite has not been rerun for this update. Newly assembled package installation, baking, broader interactive workflows, performance, and other systems remain unverified.
+
+## Historical package result and scope — 19 October 2026
 
 **Dream Textures 0.4.2-compat.2** is an attribution and packaging revision prepared on 19 October 2026 for **Blender 5.2.2 LTS / Windows x64 / Python 3.13 / RTX 5060**. Its runtime implementation is retained from **0.4.2-compat.1**.
 
-The 0.4.2-compat.1 implementation passed **47 automated tests**, and its production dependency set resolved to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. Those test sources, logs, and dependency pins are preserved in this revision. A Windows GPU installation and a pretrained model generation are the remaining target-machine acceptance checks.
+The 0.4.2-compat.1 implementation passed **47 automated tests**, and its production dependency set resolved to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. Those test sources, logs, and dependency pins are preserved in this revision. At the time of that package report, Windows GPU installation and pretrained-model generation were the remaining target-machine acceptance checks; the subsequent results are recorded above.
 
 The tests establish API/runtime compatibility. They do not establish pretrained output quality, performance, available VRAM in a particular scene, every ControlNet auxiliary checkpoint, all interactive painting/projection/viewport behavior, or compatibility with other operating systems.
 
@@ -26,7 +34,7 @@ The new installation asset is **Dream-Textures-0.4.2-compat2-Blender52-Windows.z
 |---|---|
 | Upstream add-on | Dream Textures 0.4.1 |
 | Upstream commit | c2622a8a9f1ae6b790cfe1d2571f814b126811b4 |
-| Current package revision | 0.4.2-compat.2; Blender displays tuple version 0.4.2 |
+| Historical package revision | 0.4.2-compat.2; Blender displays tuple version 0.4.2 |
 | Original implementation validation | 0.4.2-compat.1 |
 | Test application | Blender 5.2.2 LTS, d13f752e3b9c |
 | Embedded test interpreter | Python 3.13.13 |
@@ -90,7 +98,7 @@ The running Blender process caches its original runtime selection, including whe
 
 Automatic checks for old upstream binary releases are disabled for this compatibility build. The original project link remains available.
 
-## Target-machine acceptance
+## Original target-machine acceptance procedure
 
 On Windows, the installer verifies native/library imports, CUDA availability, CUDA 12.8, the architecture list for an RTX 50-series device, and small FP16 matrix multiplication/convolution operations. A failure leaves the previous runtime selected.
 

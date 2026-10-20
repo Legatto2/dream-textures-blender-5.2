@@ -1,0 +1,22 @@
+Date: 2026-10-20
+Platform: Linux
+Python: 3.12.14
+Command: python3 -B compatibility/tests/test_offload_lifecycle.py
+Scope: standard-library tests; no Blender or CUDA inference
+
+Behavioral simulation against <source-root>; no real CUDA or Blender execution.
+test_changed_controlnet_releases_old_wrapper_before_reuse (__main__.LifecycleTests.test_changed_controlnet_releases_old_wrapper_before_reuse) ... ok
+test_multiple_controlnets_can_be_reordered_without_losing_placement (__main__.LifecycleTests.test_multiple_controlnets_can_be_reordered_without_losing_placement) ... ok
+test_offload_disabled_does_not_install_or_remove_hooks (__main__.LifecycleTests.test_offload_disabled_does_not_install_or_remove_hooks) ... ok
+test_plain_model_offload_rebinds_cleanup_to_converted_pipeline (__main__.LifecycleTests.test_plain_model_offload_rebinds_cleanup_to_converted_pipeline) ... ok
+test_same_controlnet_three_consecutive_generations (__main__.LifecycleTests.test_same_controlnet_three_consecutive_generations) ... ok
+test_sequential_offload_detaches_nested_hooks_before_wrapper_replacement (__main__.LifecycleTests.test_sequential_offload_detaches_nested_hooks_before_wrapper_replacement) ... ok
+test_task_conversion_keeps_shared_weights_with_current_hook_ownership (__main__.LifecycleTests.test_task_conversion_keeps_shared_weights_with_current_hook_ownership) ... ok
+test_incompatible_model_download_uses_current_half_precision_preference (__main__.ValidationUITests.test_incompatible_model_download_uses_current_half_precision_preference) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.081s
+
+OK
+
+Exit code: 0

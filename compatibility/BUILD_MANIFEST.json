@@ -1,26 +1,26 @@
 {
-  "build": "0.4.2-compat.2",
-  "built_on": "2026-10-19",
+  "build": "0.4.2-compat.3",
+  "built_on": "2026-10-20",
   "files": {
     "ATTRIBUTION.md": {
-      "bytes": 2707,
-      "sha256": "bf4851dfa645da2523a5e0863fd91fcf2524fc6f465eaa999e9967b14ba37286"
+      "bytes": 3161,
+      "sha256": "cbbb2927d4cde72332f3dda90f443526efbb7f7cdff06247a609d15bf2666e21"
     },
     "LICENSE": {
       "bytes": 35149,
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     "README.md": {
-      "bytes": 8178,
-      "sha256": "55df4f31e5bf7ecc59b2370c51c9a06787498c8ec0b996327e4b222f86c48430"
+      "bytes": 11450,
+      "sha256": "446a93f90e950480919942c4d1976dd4d358a790d0338486cded2bdd87924053"
     },
     "README.upstream.md": {
       "bytes": 5318,
       "sha256": "1969df016f07d440a1b6f14fccbc31a91fe450b852407b5834d8520aefe264b2"
     },
     "THIRD_PARTY_NOTICES.md": {
-      "bytes": 2893,
-      "sha256": "8481a27195487afe4330c193bd468f4d4975585e994ccedb219ab0b587d4f593"
+      "bytes": 3205,
+      "sha256": "56a8a4bfb3a8c4076b40684fb62ee175cecfce0b6901725e5b74b7e8174164c3"
     },
     "__init__.py": {
       "bytes": 9387,
@@ -103,16 +103,20 @@
       "sha256": "ab3b03ec2bdfbb2417cf32318a96169021a8ce95d071fd5b3eed16ca9536860f"
     },
     "compatibility/BUILD_REPORT.md": {
-      "bytes": 11082,
-      "sha256": "0665f012b16a5b7221e822ed62dd45e02dd0d25005231b439126afc28221947a"
+      "bytes": 12535,
+      "sha256": "5008649cf4538370e92fe8b524098b177bffdd89675c27c843848bf2336a2be1"
     },
     "compatibility/TESTING.md": {
-      "bytes": 3908,
-      "sha256": "7aeabaf4ae6c59668989b8f6ee61cb7c8248d9ad091dae733d19a16a74693af1"
+      "bytes": 5047,
+      "sha256": "0c5e509bae2aaa266dd78d4905ab50e701d93704b8f843376e958668b3fdcb8d"
+    },
+    "compatibility/VALIDATION_2026-10-20.md": {
+      "bytes": 8071,
+      "sha256": "a11f5fdb505394bfae96ea4ebee29593d958b5cfad46eaeaad356df52c0314f5"
     },
     "compatibility/build_zip.py": {
       "bytes": 2872,
-      "sha256": "c152c403851ee6b196c55934ac1d8994a40a40b0a2f8a6c65ae32f012c82cbc1"
+      "sha256": "7a080cd5b9ff0f1e1db65b7df2ae7f657b2b15f04b207d248f7fbd3c5665cf40"
     },
     "compatibility/evidence/actor-integration.log": {
       "bytes": 1609,
@@ -150,9 +154,17 @@
       "bytes": 4925,
       "sha256": "b0529414505bd50e4fe1401e9bb06e04e2f4cbab8a6ca552db0cec6a6b9a8f69"
     },
+    "compatibility/evidence/installer-2026-10-20.log": {
+      "bytes": 2850,
+      "sha256": "b0595f3b9a2b13f13b01797e718603a22e2aa1599f77bc07b266f839b5e176a9"
+    },
     "compatibility/evidence/installer-tests.log": {
       "bytes": 2764,
       "sha256": "32b06f56f1efab7d80faa3039a1b6da682e6776b4e3c8ff2f35af1b42077a247"
+    },
+    "compatibility/evidence/offload-lifecycle-2026-10-20.log": {
+      "bytes": 1655,
+      "sha256": "364bcfb812c1453a8e15f1593bb3b393d438c9bece859149879c43a3bab47f83"
     },
     "compatibility/evidence/runtime-check.json": {
       "bytes": 756,
@@ -202,6 +214,10 @@
       "bytes": 13445,
       "sha256": "e96eb335ceea99a3745e6af34aa99de70592c8321e0e056d1cb06b1553c5d979"
     },
+    "compatibility/tests/test_offload_lifecycle.py": {
+      "bytes": 19933,
+      "sha256": "38ef637e2d0ef9eafacad33f6f72fbeff4bedf893364e330a563313da2bff7d4"
+    },
     "compatibility/tests/test_zip_install.py": {
       "bytes": 2632,
       "sha256": "dadcc8fa5736ea327ab1b0b8c73c31dd4c7afcb83dc9a4463d95373537e5dffa"
@@ -215,8 +231,8 @@
       "sha256": "4f07d0cb68d7107d0175b53ee9228cfd262661b074e2880b6b85c31db584f47b"
     },
     "diffusers_backend.py": {
-      "bytes": 17174,
-      "sha256": "da65ce888721be03809ac8d304a9d12a305b6e6712ff04799917710e2b0cef85"
+      "bytes": 17172,
+      "sha256": "2f2f210622a22eee0fba16e7136bd4482d6daf5846c5b32d70550e1075cddf6f"
     },
     "docs/AI_UPSCALING.md": {
       "bytes": 1307,
@@ -483,8 +499,8 @@
       "sha256": "d1ee92cbd35c08150e4b5c20aa1085c53324ee9106f1c298554a48866de4297b"
     },
     "generator_process/actions/load_model.py": {
-      "bytes": 9810,
-      "sha256": "53746fb37b275a6bef72e5cf992beebf5b7ec6cdfbc31db64d8e97036badd5e8"
+      "bytes": 11505,
+      "sha256": "857bbb20342059c8a13b9cf10ea4802ac0f5e3352bc62eb39a788bdd1bbdb814"
     },
     "generator_process/actions/outpaint.py": {
       "bytes": 2347,
@@ -712,7 +728,7 @@
     },
     "version.py": {
       "bytes": 307,
-      "sha256": "9f11b1dea9abdbfba9e9ffb146f5228e3a9a82affbfcf0a92d9bbe143bcb3458"
+      "sha256": "792a69f81c15a913687d00b583f0822decc199fdbbcfddbf236e955102886b5b"
     },
     "wheels/invisible_watermark-0.2.0+dreamtextures1-py3-none-any.whl": {
       "bytes": 1633432,

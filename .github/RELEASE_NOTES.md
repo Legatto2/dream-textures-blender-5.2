@@ -1,3 +1,44 @@
+# 0.4.2-compat.3 — unreleased source revision
+
+**Experimental community build · 20 October 2026**
+
+Integrates the two-file hotfix tested on **compat.2 / Windows 11 / Blender 5.2.2 LTS / RTX 5060**. Blender continues to display the add-on version as **0.4.2**. The compatibility-build identifier is **0.4.2-compat.3**; dependency pins are unchanged.
+
+## Changes
+
+- Remove stale pipeline and component offload hooks before cached models are reused or their ControlNet wrapper is replaced. Fresh hooks can then cover the complete reconstructed pipeline, addressing the reported CPU/CUDA mismatch on later ControlNet runs.
+- Replace the stale `prefer_fp16_revision` UI reference with the existing `prefer_fp16_variant` preference and operator field.
+- Add focused regression tests for repeated cached inference, wrapper replacement, offload cleanup, and unchanged cache reuse.
+- Update installation guidance, attribution, build metadata, and validation records to reflect the maintainer's Windows tests.
+
+## Validation scope
+
+The maintainer reported pretrained SD 1.5 generation on the target Windows machine, followed by **three consecutive ControlNet projections without errors after the hotfix**. The generator remained running between those projections; **Seamless was Auto**. Later screenshots confirmed generated bricks on a selected cube face, with a pale cap traced to the source image itself.
+
+The local offload regressions use simulated dependencies/devices. They are separate from both the maintainer's actual Windows tests and the historical 47-test compat.1 suite. The full Blender/real-inference suite was not rerun for this revision. See the [current validation record](../compatibility/VALIDATION_2026-10-20.md) and [reproduction instructions](../compatibility/TESTING.md).
+
+**Remaining acceptance:** installing the newly assembled compat.3 ZIP in Blender, baking/reprojection onto existing UV layouts, broader interactive painting/projection/viewport use, quantitative performance, and other hardware. The working one-face projection does not establish seam-free or production-ready texture quality.
+
+## Package status
+
+This is an **unreleased source revision**. No GitHub release has been published. The packaging helper produces **Dream-Textures-0.4.2-compat3-Blender52-Windows.zip** when given that output name. Its manifest is regenerated from the current source; the existing compat.2 archive remains the historical package and does not contain this fix.
+
+### Local package integrity check
+
+The source was packaged and verified locally on 20 October 2026. This is a build-validation artifact, not a published release or a completed Blender installation test.
+
+- Filename: **Dream-Textures-0.4.2-compat3-Blender52-Windows.zip**
+- Size: **40,087,906 bytes**
+- SHA-256: `3c2caf8702e48b182f5e0f8f044da37b7c62cacb1cf03779cbaccaa732b89293`
+- **184 ZIP entries** and **183 manifest file records** verified against the working source; all CRCs passed, with one `dream_textures/` root and the attribution/license notices included.
+
+
+---
+
+## Historical package records
+
+The following notes preserve the compat.2 and compat.1 package records. Their pending-acceptance statements describe **19 October 2026**; the current results are recorded above.
+
 # v0.4.2-compat.2 — prerelease notes
 
 **Experimental community build · 19 October 2026**

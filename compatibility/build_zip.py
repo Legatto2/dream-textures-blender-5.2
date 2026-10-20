@@ -26,8 +26,8 @@ def build(source, output):
         raise ValueError('Write the release ZIP outside the source folder.')
     manifest_path = source / 'compatibility/BUILD_MANIFEST.json'
     manifest = {
-        'build': '0.4.2-compat.2',
-        'built_on': '2026-10-19',
+        'build': '0.4.2-compat.3',
+        'built_on': '2026-10-20',
         'upstream_commit': 'c2622a8a9f1ae6b790cfe1d2571f814b126811b4',
         'target': {'blender': '5.2.2', 'python': '3.13', 'platform': 'Windows x64', 'gpu': 'RTX 5060'},
         'files': {
@@ -42,7 +42,7 @@ def build(source, output):
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for path in selected_files(source):
-            info = zipfile.ZipInfo('dream_textures/' + path.relative_to(source).as_posix(), (2026, 10, 19, 0, 0, 0))
+            info = zipfile.ZipInfo('dream_textures/' + path.relative_to(source).as_posix(), (2026, 10, 20, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             archive.writestr(info, path.read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)

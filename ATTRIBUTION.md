@@ -14,6 +14,8 @@ The compatibility work dated **19 October 2026** updates Blender APIs, the isola
 
 Build **0.4.2-compat.2**, also dated **19 October 2026**, is an attribution and packaging revision of **0.4.2-compat.1**. It includes these credits with the installation ZIP, adds direct credits to the installation guide, and updates the package/build labels. Runtime behavior and dependency pins are unchanged.
 
+The **0.4.2-compat.3** source revision, dated **20 October 2026**, adds the cached ControlNet offload lifecycle fix, corrects the FP16 preference used by the recommended-model UI, and records the Windows GPU and projection checks reported by Michael Heald. Its regression tests and validation scope are described in the [current validation record](compatibility/VALIDATION_2026-10-20.md). The upstream license and third-party notices remain applicable.
+
 This is an independently maintained community fork. The original project authors have not endorsed or validated this compatibility release.
 
 Original contributions made for this compatibility fork are offered under the **GNU General Public License, version 3 or any later version (GPL-3.0-or-later)**, consistent with the upstream add-on. Existing copyright and license notices remain applicable. This notice identifies the compatibility maintainer and modifications; it does not claim ownership of the original project or replace its license.
