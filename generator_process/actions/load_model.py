@@ -2,8 +2,39 @@ import gc
 import logging
 import os
 from ..models import Checkpoint, ModelConfig, Scheduler
+from ..model_weights import CONTROLNET_FP16_WEIGHTS, find_controlnet_weights
 
 logger = logging.getLogger(__name__)
+
+
+def _remove_cached_pipeline_hooks(pipeline):
+    """Detach offload state before cached components move to a new pipeline.
+
+    AutoPipeline.from_pipe() shares model components, but does not transfer
+    the pipeline's hook bookkeeping. ControlNet's container is also rebuilt
+    below. Remove the old hooks while that container is still reachable so
+    Optimizations.apply() can install a complete set on the new pipeline.
+    """
+    import torch
+    from accelerate.hooks import remove_hook_from_module
+
+    hooks = list(getattr(pipeline, "_all_hooks", ()))
+    final_hook = getattr(pipeline, "final_offload_hook", None)
+    if final_hook is not None and all(hook is not final_hook for hook in hooks):
+        hooks.append(final_hook)
+    for hook in hooks:
+        hook.offload()
+        hook.remove()
+    if hasattr(pipeline, "_all_hooks"):
+        pipeline._all_hooks = []
+    if hasattr(pipeline, "final_offload_hook"):
+        pipeline.final_offload_hook = None
+
+    # Sequential offload installs hooks on submodules rather than tracking
+    # all of them in _all_hooks. Detaching restores its saved CPU weights.
+    for component in pipeline.components.values():
+        if isinstance(component, torch.nn.Module):
+            remove_hook_from_module(component, recurse=True)
 
 
 def revision_paths(model, config="model_index.json"):
@@ -70,24 +101,23 @@ def _load_controlnet_model(cache, model, half_precision):
         # controlnet models shouldn't have a fp16 revision to worry about
         raise FileNotFoundError(f"{model} does not contain a main revision")
 
-    fp16_weights = ["diffusion_pytorch_model.fp16.safetensors", "diffusion_pytorch_model.fp16.bin"]
-    fp32_weights = ["diffusion_pytorch_model.safetensors", "diffusion_pytorch_model.bin"]
-    if half_precision:
-        weights_names = fp16_weights + fp32_weights
-    else:
-        weights_names = fp32_weights + fp16_weights
-
-    weights = next((name for name in weights_names if os.path.isfile(os.path.join(revisions["main"], name))), None)
+    weights = find_controlnet_weights(revisions["main"], half_precision)
     if weights is None:
-        raise FileNotFoundError(f"Can't find appropriate weights in {model}")
-    half_weights = weights in fp16_weights
+        # Backport diagnostic: JasonHoku/dream-textures 32c7870.
+        raise FileNotFoundError(
+            f"No supported non-empty ControlNet weights are available in {model}. "
+            "The download may still be in progress or incomplete. "
+            "Finish or retry the download, then try again."
+        )
+    half_weights = weights in CONTROLNET_FP16_WEIGHTS
     if not half_precision and half_weights:
         logger.warning(f"Can't load fp32 weights for model {model}, attempting to load fp16 instead")
 
     return ControlNetModel.from_pretrained(
         revisions["main"],
         torch_dtype=torch.float16 if half_precision else None,
-        variant="fp16" if half_weights else None
+        variant="fp16" if half_weights else None,
+        use_safetensors=weights.endswith(".safetensors"),
     )
 
 
@@ -184,7 +214,7 @@ def _load_pipeline(cache, model, model_class, half_precision, scheduler, **kwarg
 
 def load_model(self, model_class, model, optimizations, scheduler, controlnet=None, sdxl_refiner_model=None, **kwargs):
     import torch
-    from diffusers import StableDiffusionXLPipeline, AutoPipelineForImage2Image
+    from diffusers import DiffusionPipeline, StableDiffusionXLPipeline, AutoPipelineForImage2Image
     from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
     device = self.choose_device(optimizations)
@@ -199,6 +229,12 @@ def load_model(self, model_class, model, optimizations, scheduler, controlnet=No
         torch.cuda.empty_cache()
     else:
         model_cache = self._pipe[1]
+        if optimizations.cpu_offloading(device):
+            # Hooks belong to the old pipeline/container, not just the cached
+            # weights. Clean them before pruning models or replacing ControlNet.
+            for cached_model in model_cache.values():
+                if isinstance(cached_model, DiffusionPipeline):
+                    _remove_cached_pipeline_hooks(cached_model)
         expected_models = {model}
         if sdxl_refiner_model is not None:
             expected_models.add(sdxl_refiner_model)

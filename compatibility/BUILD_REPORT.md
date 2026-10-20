@@ -1,10 +1,22 @@
 # Compatibility build report
 
-## Result and scope
+## Current source revision — 20 October 2026
+
+**0.4.2-compat.3** integrates the cached ControlNet offload hotfix, the recommended-model FP16 preference correction, and selected Jason Hoku backports. This is an **unreleased source revision**. The tested cache-cleanup helper and `load_model()` lifecycle function remain unchanged by the additional backports; other portions of the loader and backend now include further fixes. The historical two-file hotfix hashes are recorded separately from the current manifest. Dependency pins and private runtime installation remain unchanged.
+
+Michael Heald reported successful pretrained SD 1.5 generation on Windows 11 / Blender 5.2.2 LTS / RTX 5060, then three consecutive ControlNet projections without errors after applying the hotfix. The generator remained running between those runs, and Seamless was Auto. Later screenshots confirmed basic brick projection onto one selected face; a pale top strip was traced to a gray cap already present in the generated image.
+
+The current [validation record](VALIDATION_2026-10-20.md) distinguishes actual maintainer-run Windows tests, screenshot observations, focused local regressions using simulated dependencies/devices, and the historical execution evidence below. The Windows runs preceded the additional backports. The full 47-test Blender/runtime suite has not been rerun for this update. Newly assembled package installation, model-folder UI and capture changes in Blender, baking, broader interactive workflows, performance, and other systems remain unverified.
+
+The [JasonHoku review](JASONHOKU_REVIEW_2026-10-20.md) pins his workflow and latest reviewed source, credits the contributing commits, and records the integration decisions. The backports cover bounded background model discovery, consistent linked ControlNet dispatch, finite masked depth capture and inspectable diagnostics, render/GPU cleanup, explicit Depth and Color task selection, cancellation callback binding, incomplete-download detection, and the compatible DPT processor API. New offline suites and a Python 3.13 package workflow check these changes without downloading neural model weights. Modern-model and ComfyUI backend migrations remain separate work.
+
+The integrated offline run passed **90 tests in seven suites** on Linux Python 3.12.14 / NumPy 2.3.5, and all 108 Python files passed source compilation. The current results include full-identifier model selection, explicit-link/refiner integration, capped catalog refreshes, and restoration of constrained video/multilayer output settings. See [test reproduction](TESTING.md) and [combined output](evidence/offline-backports-2026-10-20.log). The optional live Blender enum/storage acceptance script is included but unexecuted.
+
+## Historical package result and scope — 19 October 2026
 
 **Dream Textures 0.4.2-compat.2** is an attribution and packaging revision prepared on 19 October 2026 for **Blender 5.2.2 LTS / Windows x64 / Python 3.13 / RTX 5060**. Its runtime implementation is retained from **0.4.2-compat.1**.
 
-The 0.4.2-compat.1 implementation passed **47 automated tests**, and its production dependency set resolved to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. Those test sources, logs, and dependency pins are preserved in this revision. A Windows GPU installation and a pretrained model generation are the remaining target-machine acceptance checks.
+The 0.4.2-compat.1 implementation passed **47 automated tests**, and its production dependency set resolved to Windows Python 3.13 wheels. The add-on was exercised in the official Blender 5.2.2 Linux application and its embedded Python. Those test sources, logs, and dependency pins are preserved in this revision. At the time of that package report, Windows GPU installation and pretrained-model generation were the remaining target-machine acceptance checks; the subsequent results are recorded above.
 
 The tests establish API/runtime compatibility. They do not establish pretrained output quality, performance, available VRAM in a particular scene, every ControlNet auxiliary checkpoint, all interactive painting/projection/viewport behavior, or compatibility with other operating systems.
 
@@ -26,7 +38,7 @@ The new installation asset is **Dream-Textures-0.4.2-compat2-Blender52-Windows.z
 |---|---|
 | Upstream add-on | Dream Textures 0.4.1 |
 | Upstream commit | c2622a8a9f1ae6b790cfe1d2571f814b126811b4 |
-| Current package revision | 0.4.2-compat.2; Blender displays tuple version 0.4.2 |
+| Historical package revision | 0.4.2-compat.2; Blender displays tuple version 0.4.2 |
 | Original implementation validation | 0.4.2-compat.1 |
 | Test application | Blender 5.2.2 LTS, d13f752e3b9c |
 | Embedded test interpreter | Python 3.13.13 |
@@ -90,7 +102,7 @@ The running Blender process caches its original runtime selection, including whe
 
 Automatic checks for old upstream binary releases are disabled for this compatibility build. The original project link remains available.
 
-## Target-machine acceptance
+## Original target-machine acceptance procedure
 
 On Windows, the installer verifies native/library imports, CUDA availability, CUDA 12.8, the architecture list for an RTX 50-series device, and small FP16 matrix multiplication/convolution operations. A failure leaves the previous runtime selected.
 

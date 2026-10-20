@@ -15,6 +15,9 @@ from functools import reduce
 
 from .. import api
 from ..image_utils import bpy_to_np, grayscale
+from ..model_selection import ModelSelection
+
+_model_selection = ModelSelection("_dream_textures_model_identifier")
 
 def scheduler_options(self, context):
     return [
@@ -72,16 +75,30 @@ def modify_action_source_type(self, context):
         ('depth', 'Depth', 'Treat the initial image as a depth map, and ignore any color. Matches the composition of the source image without any color influence', 4),
     ]
 
-def model_options(self, context):
-    return [
-        None if model is None else (model.id, model.name, model.description)
-        for model in self.get_backend().list_models(context)
-    ]
+def _model_selection_data(self, context):
+    if self is None:
+        return [], None
+    try:
+        backend = self.get_backend()
+        return backend.list_models(context or bpy.context), getattr(backend, "resolve_model_identifier", None)
+    except (AttributeError, KeyError, ReferenceError, RuntimeError):
+        # Dynamic enums can be queried while the add-on/backend is registering.
+        return [], None
 
-def _model_update(self, context):
-    options = [m for m in model_options(self, context) if m is not None]
-    if self.model == '' and len(options) > 0:
-        self.model = options[0][0]
+
+def model_options(self, context):
+    models, resolve = _model_selection_data(self, context)
+    return _model_selection.items(self, models, resolve)
+
+
+def _model_get(self, current_value, is_set):
+    models, resolve = _model_selection_data(self, bpy.context)
+    return _model_selection.get(self, current_value, is_set, models, resolve)
+
+
+def _model_set(self, new_value, current_value, is_set):
+    models, resolve = _model_selection_data(self, bpy.context)
+    return _model_selection.set(self, new_value, current_value, is_set, models, resolve)
 
 def backend_options(self, context):
     return [
@@ -100,7 +117,8 @@ def seed_clamp(self, ctx):
 
 attributes = {
     "backend": EnumProperty(name="Backend", items=backend_options, description="Specify which generation backend to use"),
-    "model": EnumProperty(name="Model", items=model_options, description="Specify which model to use for inference", update=_model_update),
+    "model": EnumProperty(name="Model", items=model_options, get_transform=_model_get,
+                          set_transform=_model_set, description="Specify which model to use for inference"),
     
     "control_nets": CollectionProperty(type=ControlNet),
     "active_control_net": IntProperty(name="Active ControlNet"),
@@ -213,6 +231,7 @@ def generate_args(self, context, iteration=0, init_image=None, control_images=No
         file_batch_lines_negative = [""] * len(file_batch_lines)
     
     backend: api.Backend = self.get_backend()
+    resolve_model = getattr(backend, "resolve_model_identifier", lambda identifier: identifier)
     batch_size = backend.get_batch_size(context)
     iteration_limit = len(file_batch_lines) if is_file_batch else self.iterations
     batch_size = min(batch_size, iteration_limit-iteration)
@@ -263,7 +282,7 @@ def generate_args(self, context, iteration=0, init_image=None, control_images=No
 
     return api.GenerationArguments(
         task=task,
-        model=next((model for model in self.get_backend().list_models(context) if model is not None and model.id == self.model), None),
+        model=next((model for model in backend.list_models(context) if model is not None and model.id == resolve_model(self.model)), None),
         prompt=api.Prompt(
             file_batch_lines[iteration:iteration+batch_size] if is_file_batch else [self.generate_prompt()] * batch_size,
             file_batch_lines_negative[iteration:iteration+batch_size] if is_file_batch else ([self.negative_prompt] * batch_size if self.use_negative_prompt else None)
@@ -278,7 +297,7 @@ def generate_args(self, context, iteration=0, init_image=None, control_images=No
         iterations=self.iterations,
         control_nets=[
             api.models.control_net.ControlNet(
-                net.control_net,
+                resolve_model(net.control_net),
                 control_images[i] if control_images is not None else None,
                 net.conditioning_scale
             )

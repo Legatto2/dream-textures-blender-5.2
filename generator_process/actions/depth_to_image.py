@@ -49,9 +49,10 @@ def depth_to_image(
         def prepare_depth(self, depth, image, dtype, device):
             device = torch.device('cpu' if device.type == 'mps' else device.type)
             if depth is None:
-                from transformers import DPTFeatureExtractor, DPTForDepthEstimation
+                # Backport: JasonHoku/dream-textures 32c7870; also supported by Transformers 4.48.3.
+                from transformers import DPTImageProcessor, DPTForDepthEstimation
                 import contextlib
-                feature_extractor = DPTFeatureExtractor.from_pretrained("Intel/dpt-large")
+                feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-large")
                 depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-large")
                 depth_estimator = depth_estimator.to(device)
                 

@@ -32,6 +32,11 @@ if current_process().name != "__actor__":
 
     module_name = os.path.basename(os.path.dirname(__file__))
     def clear_modules():
+        previous_preferences = sys.modules.get(module_name + '.preferences')
+        if previous_preferences is not None:
+            shutdown = getattr(previous_preferences, 'shutdown_model_discovery', None)
+            if shutdown is not None:
+                shutdown()
         for name in list(sys.modules.keys()):
             if name.startswith(module_name) and name != module_name:
                 del sys.modules[name]
@@ -40,6 +45,7 @@ if current_process().name != "__actor__":
     from .render_pass import register_render_pass, unregister_render_pass, pass_inputs
     from .prompt_engineering import *
     from .operators.install_dependencies import shutdown_installer
+    from .preferences import shutdown_model_discovery
     from .operators.project import framebuffer_arguments
     from .classes import CLASSES, PREFERENCE_CLASSES
     from .tools import TOOLS
@@ -136,6 +142,7 @@ if current_process().name != "__actor__":
         bpy.utils.register_class(DiffusersBackend)
 
     def unregister():
+        shutdown_model_discovery()
         shutdown_installer()
         kill_generator()
         unregister_render_pass()

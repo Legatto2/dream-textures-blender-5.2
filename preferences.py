@@ -15,10 +15,15 @@ from .ui.presets import RestoreDefaultPresets, default_presets_missing
 from .generator_process import Generator
 from .generator_process.actions.huggingface_hub import DownloadStatus, Model as HubModel
 from .generator_process.models import Checkpoint, ModelConfig, ModelType
+from .model_scanner import ModelScanService, ScanResult, model_identifier, normalize_path, reconcile_scan_result
 
 is_downloading = False
 _preferences_generation = None
 _initial_models_timer = None
+_model_scan_service = None
+_model_refresh_timer = None
+_model_refresh_token = None
+_published_model_scan = ScanResult()
 
 
 def _preferences_for_callback(generation):
@@ -97,6 +102,9 @@ class Model(bpy.types.PropertyGroup):
 
     model: bpy.props.StringProperty(name="Model")
     model_base: bpy.props.StringProperty()
+    model_identifier: bpy.props.StringProperty()
+    model_label: bpy.props.StringProperty()
+    model_is_local: bpy.props.BoolProperty(default=False)
     downloads: bpy.props.IntProperty(name="Downloads")
     likes: bpy.props.IntProperty(name="Likes")
     model_type: bpy.props.EnumProperty(name="Model Type", items=[(t.name, t.name, '') for t in ModelType])
@@ -104,8 +112,10 @@ class Model(bpy.types.PropertyGroup):
 class PREFERENCES_UL_ModelList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         model_name = item.model
-        is_installed = False
-        if os.path.exists(item.model):
+        is_installed = item.model_is_local
+        if is_installed:
+            model_name = item.model_label or item.model_base
+        elif os.path.exists(item.model):
             model_name = os.path.basename(item.model).replace('models--', '').replace('--', '/')
             is_installed = True
         split = layout.split(factor=0.75)
@@ -121,21 +131,47 @@ class PREFERENCES_UL_ModelList(bpy.types.UIList):
         install_model.prefer_fp16_variant = data.prefer_fp16_variant
         install_model.resume_download = data.resume_download
 
+_MODEL_FIELDS = (
+    'model', 'model_base', 'model_identifier', 'model_label', 'model_is_local',
+    'downloads', 'likes', 'model_type',
+)
+
+
+def _replace_model_rows(collection, rows):
+    previous = [{field: getattr(item, field) for field in _MODEL_FIELDS} for item in collection]
+
+    def replace(rows):
+        collection.clear()
+        for row in rows:
+            item = collection.add()
+            for field, value in row.items():
+                setattr(item, field, value)
+
+    try:
+        replace(rows)
+    except Exception:
+        replace(previous)
+        raise
+
+
 def set_model_list(model_list: str, models: list):
     pref = _preferences_for_callback(_preferences_generation)
     if pref is None:
-        return
-    getattr(pref, model_list).clear()
+        return False
+    rows = []
     for model in models:
-        m = getattr(pref, model_list).add()
-        m.model = model.id
-        m.model_base = os.path.basename(model.id)
-        m.downloads = model.downloads
-        m.likes = model.likes
-        try:
-            m.model_type = model.model_type.name
-        except:
-            pass
+        rows.append({
+            'model': model.id,
+            'model_base': os.path.basename(model.id),
+            'model_identifier': getattr(model, 'identifier', ''),
+            'model_label': getattr(model, 'display_name', ''),
+            'model_is_local': getattr(model, 'is_local', False),
+            'downloads': model.downloads,
+            'likes': model.likes,
+            'model_type': model.model_type.name,
+        })
+    _replace_model_rows(getattr(pref, model_list), rows)
+    return True
 
 class checkpoint_lookup:
     _checkpoints = {}
@@ -151,48 +187,144 @@ class model_lookup:
     def get(cls, item):
         return cls._models.get(item, None)
 
+def _legacy_model_identifier(path):
+    return os.path.basename(path).replace('models--', '').replace('--', '/')
+
+
+def _build_model_catalog(hub_models, scan):
+    """Build a replacement catalog without touching Blender or existing lookups."""
+    model_list = list(hub_models)
+    models = {_legacy_model_identifier(model.id): model for model in model_list}
+    checkpoints = {}
+    linked_paths = {linked.identity for linked in scan.linked}
+    for linked in scan.linked:
+        config = ModelConfig[linked.config]
+        model = HubModel(linked.path, '', [], -1, -1, ModelType.from_config(config))
+        model.identifier = _legacy_model_identifier(linked.path)
+        model.display_name = os.path.basename(linked.path)
+        model.is_local = True
+        model_list.append(model)
+        checkpoint = Checkpoint(linked.path, config)
+        # Preserve legacy/manual IDs and a prior folder selection when the user
+        # explicitly links that same file to override its inferred config. The
+        # aliases share one catalog row and the explicit Checkpoint object.
+        for identifier in {
+            os.path.basename(linked.path), model.identifier,
+            model_identifier(linked.identity),
+        }:
+            checkpoints[identifier] = checkpoint
+            models[identifier] = model
+
+    for scanned in scan.models:
+        if scanned.identity in linked_paths:
+            continue  # Fresh explicit configs override retained folder discoveries.
+        config = ModelConfig[scanned.classification.config]
+        model = HubModel(scanned.path, '', [], -1, -1, ModelType[scanned.classification.model_type])
+        model.identifier = scanned.identifier
+        model.display_name = scanned.display
+        model.is_local = True
+        model_list.append(model)
+        checkpoints[scanned.identifier] = Checkpoint(scanned.path, config)
+        models[scanned.identifier] = model
+    return model_list, checkpoints, models
+
+
+def _cancel_model_refresh():
+    global _model_refresh_token, _model_refresh_timer
+    _model_refresh_token = None
+    if _model_scan_service is not None:
+        _model_scan_service.cancel()
+    if _model_refresh_timer is not None:
+        if bpy.app.timers.is_registered(_model_refresh_timer):
+            bpy.app.timers.unregister(_model_refresh_timer)
+        _model_refresh_timer = None
+
+
+def shutdown_model_discovery():
+    """Invalidate callbacks before unregister/reload; never wait for filesystem IO."""
+    global _model_scan_service, _preferences_generation, _published_model_scan
+    _preferences_generation = None
+    _published_model_scan = ScanResult()
+    _cancel_model_refresh()
+    if _model_scan_service is not None:
+        _model_scan_service.close()
+        _model_scan_service = None
+
+
 def fetch_installed_models(blocking=True):
-    if not current_runtime_status()["ready"]:
-        return
+    # Keep the historical argument for callers; filesystem refreshes are now
+    # asynchronous even when those callers pass blocking=True.
+    global _model_scan_service, _model_refresh_token, _model_refresh_timer
     generation = _preferences_generation
+    pref = _preferences_for_callback(generation)
+    if pref is None or not current_runtime_status()["ready"]:
+        return
+    _cancel_model_refresh()
+    if _model_scan_service is None:
+        _model_scan_service = ModelScanService()
+    service = _model_scan_service
+    # Copy RNA values here. The worker never reads bpy or preferences.
+    folders = tuple(folder.path for folder in pref.model_folders)
+    linked = tuple((link.path, link.model_config) for link in pref.linked_checkpoints)
+    token = _model_refresh_token = service.request(folders, linked)
+    pref.model_scan_running = True
+    pref.model_scan_status = "Refreshing models and scanning registered folders…"
+    try:
+        future = Generator.shared().hf_list_installed_models()
+    except Exception as exception:
+        _cancel_model_refresh()
+        pref.model_scan_running = False
+        pref.model_scan_status = f"Model refresh failed: {exception}"
+        return
+    scan = None
 
-    def on_done(future):
-        pref = _preferences_for_callback(generation)
-        if pref is None:
-            return
-        model_list = future.result()
+    def poll():
+        nonlocal scan
+        global _model_refresh_timer, _model_refresh_token, _published_model_scan
+        current = _preferences_for_callback(generation)
+        if current is None or token is not _model_refresh_token:
+            return None
+        if scan is None:
+            scan = service.take_result(token)
+        if scan is None or not future.done:
+            return 0.1
+        try:
+            if scan.error:
+                raise RuntimeError(scan.error)
+            if scan.cancelled:
+                raise RuntimeError("Model scan was cancelled; the previous model list is unchanged.")
+            catalog_scan = reconcile_scan_result(scan, _published_model_scan, folders)
+            model_list, checkpoints, models = _build_model_catalog(future.result(), catalog_scan)
+            # All preparation is finished. Replace the RNA list and both maps in
+            # one main-thread callback, retaining the old catalog on failure.
+            if set_model_list('installed_models', model_list):
+                checkpoint_lookup._checkpoints = checkpoints
+                model_lookup._models = models
+                _published_model_scan = catalog_scan
+            if scan.limited:
+                if scan.linked_complete:
+                    message = ("Folder scan limit reached. Hub models and checkpoint links refreshed; "
+                               "previously discovered models from registered folders retained. "
+                               "Choose smaller folders or rescan.")
+                else:
+                    retained = ("Previous local models retained with unchanged link settings. "
+                                if catalog_scan.models or catalog_scan.linked
+                                else "Local models need a complete checkpoint-link scan. ")
+                    message = ("Checkpoint-link scan limit reached. Hub models refreshed. "
+                               + retained + "Choose smaller linked folders or rescan.")
+            else:
+                message = f"Found {len(scan.models)} folder models; skipped {scan.skipped} unsupported or invalid files."
+            if scan.errors:
+                message += f" {scan.errors} unreadable locations."
+            current.model_scan_status = message
+        except Exception as exception:
+            current.model_scan_status = f"Model refresh failed: {exception}"
+        current.model_scan_running = False
+        _model_refresh_timer = _model_refresh_token = None
+        return None
 
-        model_lookup._models = { os.path.basename(model.id).replace('models--', '').replace('--', '/'): model for model in model_list }
-
-        checkpoint_links = ((link.path, ModelConfig[link.model_config]) for link in pref.linked_checkpoints)
-        checkpoints = {}
-        for path, config in checkpoint_links:
-            if not os.path.exists(path):
-                continue
-            if os.path.isfile(path):
-                checkpoints[os.path.basename(path)] = (path, config)
-                continue
-            for name in os.listdir(path):
-                if os.path.splitext(name)[1] not in import_extensions:
-                    continue
-                if name in checkpoints:
-                    # file linked config takes precedence over folder linked config
-                    continue
-                checkpoints[name] = (os.path.join(path, name), config)
-        checkpoint_lookup._checkpoints.clear()
-        for path, config in checkpoints.values():
-            model = HubModel(path, "", [], -1, -1, ModelType.from_config(config))
-            model_list.append(model)
-            checkpoint_lookup._checkpoints[os.path.basename(path)] = Checkpoint(path, config)
-            model_lookup._models[os.path.basename(path)] = model
-
-        set_model_list('installed_models', model_list)
-
-    future = Generator.shared().hf_list_installed_models()
-    if blocking:
-        on_done(future)
-    else:
-        future.add_done_callback(on_done)
+    _model_refresh_timer = poll
+    bpy.app.timers.register(poll, first_interval=0.1, persistent=True)
 
 
 class ModelSearch(bpy.types.Operator):
@@ -216,6 +348,9 @@ class InstallModel(bpy.types.Operator):
     resume_download: bpy.props.BoolProperty(name="", default=True)
 
     def execute(self, context):
+        if os.path.isabs(self.model) and not os.path.exists(self.model):
+            self.report({'ERROR'}, "This local model is no longer available. Refresh the model list.")
+            return {'CANCELLED'}
         if os.path.exists(self.model):
             if os.path.isfile(self.model):
                 webbrowser.open(f"file://{os.path.dirname(self.model)}")
@@ -363,6 +498,83 @@ class PREFERENCES_UL_CheckpointList(bpy.types.UIList):
         unlink = layout.operator(UnlinkCheckpoint.bl_idname, text="", icon="TRASH")
         unlink.path = item.path
 
+
+# Model-folder UX adapted from JasonHoku/dream-textures 63c19fd. Discovery is
+# opt-in, bounded and asynchronous; removal never deletes checkpoint files.
+class ModelFolder(bpy.types.PropertyGroup):
+    path: StringProperty(name="Folder", subtype='DIR_PATH')
+
+
+class AddModelFolder(bpy.types.Operator):
+    bl_idname = "dream_textures.add_model_folder"
+    bl_label = "Add Model Folder"
+    bl_description = "Discover supported .safetensors checkpoints in a folder and its subfolders"
+
+    directory: StringProperty(subtype='DIR_PATH')
+    filter_folder: bpy.props.BoolProperty(default=True, options={'HIDDEN'})
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        if not self.directory:
+            self.report({'ERROR'}, "Choose a model folder.")
+            return {'CANCELLED'}
+        pref = context.preferences.addons[__package__].preferences
+        path = os.path.abspath(bpy.path.abspath(self.directory))
+        if any(normalize_path(folder.path) == normalize_path(path) for folder in pref.model_folders):
+            self.report({'INFO'}, "This folder is already registered.")
+            return {'CANCELLED'}
+        pref.model_folders.add().path = path
+        fetch_installed_models(False)
+        return {'FINISHED'}
+
+
+class RemoveModelFolder(bpy.types.Operator):
+    bl_idname = "dream_textures.remove_model_folder"
+    bl_label = "Remove Model Folder"
+    bl_description = "Remove this folder from discovery; keep its files on disk"
+
+    path: StringProperty()
+
+    def execute(self, context):
+        pref = context.preferences.addons[__package__].preferences
+        index = next((i for i, folder in enumerate(pref.model_folders) if folder.path == self.path), -1)
+        if index != -1:
+            pref.model_folders.remove(index)
+        fetch_installed_models(False)
+        return {'FINISHED'}
+
+
+class RescanModelFolders(bpy.types.Operator):
+    bl_idname = "dream_textures.rescan_model_folders"
+    bl_label = "Rescan Model Folders"
+    bl_description = "Refresh registered folders and linked checkpoints without loading model weights"
+
+    def execute(self, context):
+        fetch_installed_models(False)
+        return {'FINISHED'}
+
+
+class CancelModelScan(bpy.types.Operator):
+    bl_idname = "dream_textures.cancel_model_scan"
+    bl_label = "Cancel Scan"
+
+    def execute(self, context):
+        _cancel_model_refresh()
+        pref = context.preferences.addons[__package__].preferences
+        pref.model_scan_running = False
+        pref.model_scan_status = "Scan cancelled. The previous model list is unchanged."
+        return {'FINISHED'}
+
+
+class PREFERENCES_UL_ModelFolderList(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        layout.label(text=item.path, icon='FILE_FOLDER')
+        layout.operator(RemoveModelFolder.bl_idname, text='', icon='X').path = item.path
+
+
 class StableDiffusionPreferences(bpy.types.AddonPreferences):
     bl_idname = __package__
 
@@ -381,6 +593,11 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
     linked_checkpoints: CollectionProperty(type=CheckpointGroup)
     active_linked_checkpoint: bpy.props.IntProperty(name="Active Checkpoint", default=0)
 
+    model_folders: CollectionProperty(type=ModelFolder)
+    active_model_folder: bpy.props.IntProperty(name="Active Model Folder", default=0)
+    model_scan_running: bpy.props.BoolProperty(default=False, options={'SKIP_SAVE'})
+    model_scan_status: StringProperty(default="", options={'SKIP_SAVE'})
+
     download_file: bpy.props.StringProperty(name="")
     download_progress: bpy.props.IntProperty(name="", min=0, max=100, subtype="PERCENTAGE", update=_update_ui)
 
@@ -391,6 +608,7 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
         # The preferences entry is added after class registration. Even an
         # already installed runtime must wait until Blender finishes enabling.
         global _preferences_generation, _initial_models_timer
+        shutdown_model_discovery()
         generation = _preferences_generation = object()
 
         def initial_refresh():
@@ -407,6 +625,7 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
     def unregister():
         global _preferences_generation, _initial_models_timer, is_downloading
         _preferences_generation = None
+        shutdown_model_discovery()
         is_downloading = False
         if _initial_models_timer is not None:
             if bpy.app.timers.is_registered(_initial_models_timer):
@@ -485,6 +704,20 @@ class StableDiffusionPreferences(bpy.types.AddonPreferences):
             import_weights.prefer_fp16_variant = self.prefer_fp16_variant
             layout.template_list(PREFERENCES_UL_CheckpointList.__name__, "dream_textures_linked_checkpoints", self, "linked_checkpoints", self, "active_linked_checkpoint")
             layout.operator(LinkCheckpoint.bl_idname, icon='FOLDER_REDIRECT')
+
+            folders_box = layout.box()
+            folders_box.label(text="Model Folders", icon='FILE_FOLDER')
+            folders_box.label(text="Reuse supported .safetensors checkpoints from your own folders.")
+            folders_box.label(text="Unrecognized files are skipped. Use Link Checkpoint for an explicit configuration.")
+            if self.model_folders:
+                folders_box.template_list(PREFERENCES_UL_ModelFolderList.__name__, "dream_textures_model_folders", self, "model_folders", self, "active_model_folder")
+            folder_actions = folders_box.row(align=True)
+            folder_actions.operator(AddModelFolder.bl_idname, icon='ADD')
+            folder_actions.operator(RescanModelFolders.bl_idname, text="Rescan", icon='FILE_REFRESH')
+            if self.model_scan_running:
+                folder_actions.operator(CancelModelScan.bl_idname, icon='CANCEL')
+            for line in textwrap.wrap(self.model_scan_status, width=85):
+                folders_box.label(text=line)
 
             if weights_installed or len(self.dream_studio_key) > 0:
                 complete_box = layout.box()

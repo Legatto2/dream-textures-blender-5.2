@@ -1,3 +1,51 @@
+# 0.4.2-compat.3 — unreleased source revision
+
+**Experimental community build · 20 October 2026**
+
+Integrates the original two-file hotfix tested on **compat.2 / Windows 11 / Blender 5.2.2 LTS / RTX 5060** and selected improvements from **Jason Hoku's Dream Textures fork**. Blender continues to display the add-on version as **0.4.2**. The compatibility-build identifier is **0.4.2-compat.3**; dependency pins are unchanged. The new backports were added after the reported Windows test session.
+
+## Changes
+
+- Remove stale pipeline and component offload hooks before cached models are reused or their ControlNet wrapper is replaced. Fresh hooks can then cover the complete reconstructed pipeline, addressing the reported CPU/CUDA mismatch on later ControlNet runs.
+- Replace the stale `prefer_fp16_revision` UI reference with the existing `prefer_fp16_variant` preference and operator field.
+- Add **Model Folders** preferences for opt-in background discovery of confidently supported `.safetensors` checkpoints. Bound filesystem/header work, skip malformed/ambiguous files, cache unchanged classifications, and preserve explicit checkpoint configurations. Scan limits retain previous local results where valid while allowing fresh Hub downloads to appear, with status messages for incomplete local discovery.
+- Store newly chosen model/ControlNet/refiner selections by full identifier. Rescans preserve the choice, and missing models remain unavailable. Existing numeric selections retain their legacy downloaded/linked-model interpretation until selected again.
+- Capture depth from the invoking viewport with an explicit geometry mask, normalize finite covered pixels, and handle empty or uniform depth. Keep inspectable add-on-owned depth/color images, restore render/GPU state on errors, and reject invalid captures before UV/material changes. Temporary color capture handles video/multilayer output constraints and restores the saved format-dependent options.
+- Make ControlNet **Depth and Color** explicitly use an image-to-image task with consistently oriented color input. Resolve linked ControlNet files for image-to-image and inpainting, matching text-to-image behavior.
+- Fix the default cancellation callback, require supported non-empty ControlNet weight files for generation selection, provide an incomplete-download error, and select the supported DPT image processor API.
+- Add focused offline regressions and a Python 3.13 Actions workflow for source compilation, tests, and package/manifest validation. Official actions are pinned to commits; GPU dependencies stay in the private installer.
+- Update installation guidance, attribution, build metadata, and validation records to reflect the maintainer's Windows tests.
+
+See the [JasonHoku review](../compatibility/JASONHOKU_REVIEW_2026-10-20.md) for exact source commits and decisions. The existing cache/offload repair, private runtime, and Torch 2.9.1/CUDA 12.8 stack are retained. Flux, Z-Image, GGUF/quantization, ComfyUI backend work, and camera/aspect-fit projection are separate migrations; no target-machine acceptance for them is claimed.
+
+## Validation scope
+
+The maintainer reported pretrained SD 1.5 generation on the target Windows machine, followed by **three consecutive ControlNet projections without errors after the hotfix**. The generator remained running between those projections; **Seamless was Auto**. Later screenshots confirmed generated bricks on a selected cube face, with a pale cap traced to the source image itself.
+
+The combined local check passed **90 tests across seven suites** on Linux Python 3.12.14 / NumPy 2.3.5. All **108 Python files** compiled. These focused suites use temporary files, NumPy, and simulated dependencies/devices/Blender boundaries. They are separate from both the maintainer's actual Windows tests and the historical 47-test compat.1 suite. The full Blender/real-inference suite was not rerun for this revision. See the [current validation record](../compatibility/VALIDATION_2026-10-20.md), [combined offline output](../compatibility/evidence/offline-backports-2026-10-20.log), and [reproduction instructions](../compatibility/TESTING.md).
+
+**Remaining acceptance:** installing the newly assembled compat.3 ZIP in Blender, the new model-folder UI and capture/Depth and Color changes, baking/reprojection onto existing UV layouts, broader interactive painting/projection/viewport use, quantitative performance, and other hardware. The working one-face projection does not establish seam-free or production-ready texture quality.
+
+## Package status
+
+This is an **unreleased source revision**. No GitHub release has been published. The packaging helper produces **Dream-Textures-0.4.2-compat3-Blender52-Windows.zip** when given that output name. Its manifest is regenerated from the current source; the existing compat.2 archive remains the historical package and does not contain this fix.
+
+### Local package integrity check
+
+The source was packaged and verified locally on 20 October 2026. This is a build-validation artifact, not a published release or a completed Blender installation test.
+
+- Filename: **Dream-Textures-0.4.2-compat3-Blender52-Windows.zip**
+- Size: **40,143,334 bytes**
+- SHA-256: `63ffafa812360c28aa312746564995fd6dee736bf331f11d4afbb9a6de0138a4`
+- **197 ZIP entries** and **196 manifest file records** verified against the working source; all CRCs passed, with one `dream_textures/` root and the attribution/license notices included.
+
+
+---
+
+## Historical package records
+
+The following notes preserve the compat.2 and compat.1 package records. Their pending-acceptance statements describe **19 October 2026**; the current results are recorded above.
+
 # v0.4.2-compat.2 — prerelease notes
 
 **Experimental community build · 19 October 2026**
