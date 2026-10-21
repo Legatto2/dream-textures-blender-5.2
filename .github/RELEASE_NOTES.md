@@ -15,6 +15,7 @@ Integrates the original two-file hotfix tested on **compat.2 / Windows 11 / Blen
 - Fix the default cancellation callback, require supported non-empty ControlNet weight files for generation selection, provide an incomplete-download error, and select the supported DPT image processor API.
 - Add focused offline regressions and a Python 3.13 Actions workflow for source compilation, tests, and package/manifest validation. Official actions are pinned to commits; GPU dependencies stay in the private installer.
 - Update installation guidance, attribution, build metadata, and validation records to reflect the maintainer's Windows tests.
+- Restore the main README's feature overview and illustrations, summarize this fork's differences, and move detailed setup and troubleshooting to a dedicated guide. Consolidate the GitHub landing page and index validation records under compatibility development notes.
 
 See the [JasonHoku review](../compatibility/JASONHOKU_REVIEW_2026-10-20.md) for exact source commits and decisions. The existing cache/offload repair, private runtime, and Torch 2.9.1/CUDA 12.8 stack are retained. Flux, Z-Image, GGUF/quantization, ComfyUI backend work, and camera/aspect-fit projection are separate migrations; no target-machine acceptance for them is claimed.
 
@@ -32,12 +33,12 @@ This is an **unreleased source revision**. No GitHub release has been published.
 
 ### Local package integrity check
 
-The source was packaged and verified locally on 20 October 2026. This is a build-validation artifact, not a published release or a completed Blender installation test.
+This package includes the README and documentation cleanup and was verified locally. It is a build-validation artifact, not a published release or a completed Blender installation test.
 
 - Filename: **Dream-Textures-0.4.2-compat3-Blender52-Windows.zip**
-- Size: **40,143,334 bytes**
-- SHA-256: `63ffafa812360c28aa312746564995fd6dee736bf331f11d4afbb9a6de0138a4`
-- **197 ZIP entries** and **196 manifest file records** verified against the working source; all CRCs passed, with one `dream_textures/` root and the attribution/license notices included.
+- Size: **40,144,047 bytes**
+- SHA-256: `636a5a1df93d9422e43127584c289e22c4445588f431e5ea83b670d6d7d04f8c`
+- **199 ZIP entries** and **198 manifest file records** verified against the working source; all CRCs passed, with one `dream_textures/` root and the attribution/license notices included.
 
 
 ---

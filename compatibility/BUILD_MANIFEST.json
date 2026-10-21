@@ -11,8 +11,8 @@
       "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
     },
     "README.md": {
-      "bytes": 15074,
-      "sha256": "bd7f3152c449ef34a29157df72c46b001a88001430131dd8123170df705bfc50"
+      "bytes": 5355,
+      "sha256": "b92b0934373ab257eb795281ff8d1bd77d3232f825f0df781d703c6cbfa26be6"
     },
     "README.upstream.md": {
       "bytes": 5318,
@@ -109,6 +109,10 @@
     "compatibility/JASONHOKU_REVIEW_2026-10-20.md": {
       "bytes": 9454,
       "sha256": "9802c018007b07ee8bb4e785b3b133228236e2fcdf1ed8f215d40bd0712d34f5"
+    },
+    "compatibility/README.md": {
+      "bytes": 1582,
+      "sha256": "c66ce133a295ec369571a32e04895ec681eb3417794db9b8d511da7c60a93446"
     },
     "compatibility/TESTING.md": {
       "bytes": 8821,
@@ -273,6 +277,10 @@
     "docs/AI_UPSCALING.md": {
       "bytes": 1307,
       "sha256": "feaae8fc1905f1b6e179f9efd995309c06e2df42ae65ac8537dd93f59bbcac1a"
+    },
+    "docs/BLENDER_5_2.md": {
+      "bytes": 7758,
+      "sha256": "54d6c2b182c4aaa1a12151b29d1e3ebaf18ef8daa3183bcf594b957c9345410a"
     },
     "docs/DEVELOPMENT_ENVIRONMENT.md": {
       "bytes": 4652,
